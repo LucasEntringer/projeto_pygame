@@ -2,7 +2,10 @@ import pygame
 
 pygame.init()
 
-window = pygame.display.set_mode((1000,500))
+WIDTH = 1280
+HEIGHT = 720
+
+window = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Divina Codemédia')
 
 game = True
