@@ -15,7 +15,7 @@ class Dante(pygame.sprite.Sprite):
 
         # animação: indices 0..7 da lista walk_frames
         self.anim = {
-            'idle': [0],               # frame parado (pode trocar para outro índice)
+            'idle': [0],               # frame parado 
             'walk': list(range(len(self.walk_frames))),
         }
 
@@ -93,11 +93,11 @@ class Dante(pygame.sprite.Sprite):
         self.rect.midbottom = anchor
 
     # controles simples
-    def mover_direita(self, speed=6):
+    def mover_direita(self, speed=4):
         self.speedx = speed
         self.facing = 1
 
-    def mover_esquerda(self, speed=6):
+    def mover_esquerda(self, speed=4):
         self.speedx = -speed
         self.facing = -1
 
