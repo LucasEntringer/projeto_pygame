@@ -12,8 +12,8 @@ class Dante(pygame.sprite.Sprite):
         # 5 frames por linha → cada linha = 5 frames
         # DIE (0–4), IDLE (5–9), WALK (10–14), RUN (15–19), ATTACK (20–24)
         self.anim = {
-            'idle': [5, 6, 7, 8, 9],
-            'walk': [10, 11, 12, 13, 14],
+            'idle': [6],
+            'walk': list(range(19,27)),
             'run': [15, 16, 17, 18, 19],
             'attack': [20, 21, 22, 23, 24],
         }
