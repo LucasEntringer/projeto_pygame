@@ -3,6 +3,7 @@ from config import LARGURA, ALTURA, FPS
 from assets import load_assets
 from classes import Dante
 
+
 pygame.init()
 window = pygame.display.set_mode((LARGURA, ALTURA))
 pygame.display.set_caption('Divina Codemédia')
