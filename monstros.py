@@ -3,8 +3,8 @@ from config import LARGURA, ALTURA, FPS
 pygame.init()
 
 tela = pygame.display.set_mode((LARGURA, ALTURA))
-ira = pygame.image.load ('assets\imagens\ira.png').convert_alpha()
-ira = pygame.transform.scale(ira,(50,50))
+ira = pygame.image.load ('assets\imagens\ira.png').convert()
+ira = pygame.transform.scale(ira,(150,150))
 
 #posição inicial
 
