@@ -16,7 +16,7 @@ def load_assets():
 
     # === Ajuste para a sheet Dante_1 ===
     # São 5 colunas e 5 linhas (5x5)
-    COLS = 8
+    COLS = 9
     ROWS = 5
     sheet_w, sheet_h = sheet.get_width(), sheet.get_height()
     FRAME_W = sheet_w // COLS
