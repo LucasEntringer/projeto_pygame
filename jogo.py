@@ -1,27 +1,42 @@
 import pygame
+from config import LARGURA, ALTURA, FPS
+from assets import load_assets
+from classes import Dante
 
 pygame.init()
-
-WIDTH = 1280
-HEIGHT = 720
-
-window = pygame.display.set_mode((WIDTH, HEIGHT))
+window = pygame.display.set_mode((LARGURA, ALTURA))
 pygame.display.set_caption('Divina Codemédia')
+clock = pygame.time.Clock()
 
-game = True
+# Carregar assets e criar sprites
+assets = load_assets()
+all_sprites = pygame.sprite.Group()
+dante = Dante(all_sprites, assets)
 
-while game:
+running = True
+while running:
+    dt = clock.tick(FPS)
     for event in pygame.event.get():
-        #Verifica se apertou o x para sair
         if event.type == pygame.QUIT:
-            game = False
-        # Verifica se alguma tecla foi clicada
+            running = False
+
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
-                #Definindo o esc como opção de finalizar o jogo
-                game = False
-    window.fill((255,255,255))
+                running = False
+            if event.key == pygame.K_RIGHT:
+                dante.mover_direita()
+            if event.key == pygame.K_LEFT:
+                dante.mover_esquerda()
+            if event.key == pygame.K_SPACE:
+                dante.pular()
 
-    pygame.display.update()
+        if event.type == pygame.KEYUP:
+            if event.key in [pygame.K_LEFT, pygame.K_RIGHT]:
+                dante.parar()
+
+    all_sprites.update(dt)
+    window.fill((25, 25, 35))
+    all_sprites.draw(window)
+    pygame.display.flip()
 
 pygame.quit()
