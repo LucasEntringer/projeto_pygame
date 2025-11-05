@@ -15,7 +15,7 @@ class Dante(pygame.sprite.Sprite):
 
         # animação: indices 0..7 da lista walk_frames
         self.anim = {
-            'idle': [0],               # frame parado 
+            'idle': [5],               # frame parado 
             'walk': list(range(len(self.walk_frames))),
         }
 
