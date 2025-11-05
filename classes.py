@@ -14,15 +14,16 @@ class Dante(pygame.sprite.Sprite):
         self.anim = {
             'idle': [6],
             'walk': list(range(19,27)),
-            'run': [15, 16, 17, 18, 19],
-            'attack': [20, 21, 22, 23, 24],
         }
 
         self.state = 'idle'
         self.frame_index = 0
         self.frame_timer = 0
-        self.frame_delay = 100  # ms entre frames
+        self.frame_delay = 70  # ms entre frames
 
+        self.frames_right = self.frames
+        self.frames_left = [pygame.transform.flip(f, True, False) for f in self.frames]
+        
         self.image = self.frames[self.anim[self.state][0]]
         self.rect = self.image.get_rect(midbottom=(LARGURA // 2, ALTURA - 10))
 
@@ -80,11 +81,11 @@ class Dante(pygame.sprite.Sprite):
             self.no_chao = False
 
     def mover_esquerda(self):
-        self.speedx = -8
+        self.speedx = -4
         self.facing = -1
 
     def mover_direita(self):
-        self.speedx = 8
+        self.speedx = 4
         self.facing = 1
 
     def parar(self):
