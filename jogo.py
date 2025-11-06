@@ -20,14 +20,16 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_RIGHT:
+            if event.key == pygame.K_ESCAPE:
+                running = False
+            if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                 dante.mover_direita()
-            if event.key == pygame.K_LEFT:
+            if event.key == pygame.K_LEFT or event.key == pygame.K_a:
                 dante.mover_esquerda()
             if event.key == pygame.K_SPACE:
                 dante.pular()
         if event.type == pygame.KEYUP:
-            if event.key in (pygame.K_LEFT, pygame.K_RIGHT):
+            if event.key in (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_a, pygame.K_d):
                 dante.parar()
 
     all_sprites.update(dt)
