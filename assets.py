@@ -30,4 +30,15 @@ def load_assets():
         raise RuntimeError("Nenhum frame encontrado em " + folder)
 
     assets[DANTE_WALK] = frames
+    DANTE_DIE = 'dante_die'
+    morrendo_folder = os.path.join(IMG_DIR, "morrendo")
+    die_frames = []
+    if os.path.isdir(morrendo_folder):
+        die_files = [f for f in os.listdir(morrendo_folder) if f.lower().endswith(".png")]
+        die_files = sorted(die_files, key=_numeric_sort_key)
+        for fn in die_files:
+            path = os.path.join(morrendo_folder, fn)
+            die_frames.append(pygame.image.load(path).convert_alpha())
+    assets[DANTE_DIE] = die_frames
+    
     return assets

@@ -13,6 +13,12 @@ class Dante(pygame.sprite.Sprite):
         # frames pré-cortados: list length == 8
         self.walk_frames = assets[DANTE_WALK]
 
+        # frames de morte (podem ser vazios se pasta inexistente)
+        self.die_frames = assets.get('dante_die', [])
+        # estado específico para morte: notificação se está tocando
+        self.is_dying = False
+        self.die_played = False  # marca que a animação de morte já tocou
+
         # animação: indices 0..7 da lista walk_frames
         self.anim = {
             'idle': [5],               # frame parado 
@@ -23,7 +29,7 @@ class Dante(pygame.sprite.Sprite):
         self.state = 'idle'
         self.frame_index = 0
         self.frame_timer = 0        # ms
-        self.frame_delay = 70       # ms por frame (ajuste para mais/menos fluidez)
+        self.frame_delay = 200       # ms por frame (ajuste para mais/menos fluidez)
 
         # caches flipados (gera uma vez)
         self.walk_right = self.walk_frames
@@ -70,6 +76,30 @@ class Dante(pygame.sprite.Sprite):
 
         frames_idx_list = self.anim[self.state]
         # animação com dt em ms
+        if self.is_dying:
+            # avança timer
+            self.frame_timer += dt
+            if self.frame_timer >= self.frame_delay:
+                self.frame_timer -= self.frame_delay
+                self.frame_index += 1
+                # se passou do último frame, para na última imagem
+                if self.frame_index >= len(self.die_frames):
+                    self.frame_index = len(self.die_frames) - 1
+                    self.is_dying = False
+                    self.die_played = True
+            # aplica imagem correspondente (sem flip, caso queira espelhar, adapta)
+            new_image = self.die_frames[self.frame_index]
+            #espelha se estiver virado
+            if self.facing == -1:
+                new_image = pygame.transform.flip(new_image, True, False)
+            
+            # preserva anchor
+            anchor = self.rect.midbottom
+            self.image = new_image
+            self.rect = self.image.get_rect()
+            self.rect.midbottom = anchor
+            return  # pula resto do update (não processa walk/idle)
+        
         if len(frames_idx_list) > 1:
             self.frame_timer += dt
             if self.frame_timer >= self.frame_delay:
@@ -108,3 +138,17 @@ class Dante(pygame.sprite.Sprite):
         if self.no_chao:
             self.speedy = power
             self.no_chao = False
+
+    def morrer(self):
+        if not self.die_frames:
+            return
+    # bloqueia o movimento
+        self.speedx = 0
+        self.speedy = 0
+        self.no_chao = True
+        # inicia a animação de morrer
+        self.is_dying = True
+        self.die_played = False
+        self.state = 'dead'
+        self.frame_index = 0
+        self.frame_timer = 0
