@@ -207,9 +207,9 @@ class Dante(pygame.sprite.Sprite):
         self.is_hurt = True
         self.frame_index = 0
         self.frame_timer = 0
-        # travar movimento enquanto recebe dano (opcional)
+        # travar movimento enquanto recebe dano
         self.speedx = 0
         self.speedy = 0
-        # decrementa a vida imediatamente (visualiza no HUD)
+        # decrementa a vida imediatamente
         self.lives = max(0, self.lives - 1)
-        # se zerou vidas, a lógica ao terminar o hurt chamará morrer()
+        # se zerou vidas, chamará morrer()

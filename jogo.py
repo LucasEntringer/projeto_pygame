@@ -1,6 +1,7 @@
 # jogo.py (trecho relevante)
 import pygame
-from config import LARGURA, ALTURA, FPS
+import os
+from config import LARGURA, ALTURA, FPS,  IMG_DIR
 from assets import load_assets
 from classes import Dante
 
@@ -18,6 +19,16 @@ dante = Dante(groups=[all_sprites], assets=assets)
 running = True
 while running:
     dt = clock.tick(FPS)  # dt em ms
+
+    bg = None
+    bg_path = os.path.join(IMG_DIR, 'inferno', 'Cenario_inferno.png')
+    try:
+        bg = pygame.image.load(bg_path).convert()     # convert() é mais rápido para fundos sem alpha
+        # escala a imagem para a resolução do jogo (opcional mas recomendado)
+        bg = pygame.transform.scale(bg, (LARGURA, ALTURA))
+    except Exception as e:
+        print('Erro ao carregar background', bg_path, e)
+        bg = None
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -44,7 +55,10 @@ while running:
         dante.parar()
 
     all_sprites.update(dt)
-    window.fill((30,30,30))
+    if bg:
+        window.blit(bg, (0,0))
+    else:
+        window.fill((30,30,30))
     all_sprites.draw(window)
     hearts = "♥ " * max(0, dante.lives)
     if hearts:
