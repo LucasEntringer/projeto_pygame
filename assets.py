@@ -46,4 +46,42 @@ def load_assets():
         for fn in hurt_files:
             hurt_frames.append(pygame.image.load(os.path.join(hurt_folder, fn)).convert_alpha())
     assets[DANTE_HURT] = hurt_frames
+
+    DANTE_ATTACK = 'dante_attack'
+    attack_folder = os.path.join(IMG_DIR, "atacando")
+    attack_frames = []
+    if os.path.isdir(attack_folder):
+        afiles = [f for f in os.listdir(attack_folder) if f.lower().endswith(".png")]
+        afiles = sorted(afiles, key=_numeric_sort_key)
+        for fn in afiles:
+            attack_frames.append(pygame.image.load(os.path.join(attack_folder, fn)).convert_alpha())
+    assets[DANTE_ATTACK] = attack_frames
+
+    IRA_IDLE = 'ira_idle'
+    ira_idle_path = os.path.join(IMG_DIR, "ira_parado.png")
+    ira_idle = None
+    if os.path.isfile(ira_idle_path):
+        ira_idle = pygame.image.load(ira_idle_path).convert_alpha()
+    assets[IRA_IDLE] = ira_idle
+
+    IRA_ATTACK = 'ira_attack'
+    ira_attack_folder = os.path.join(IMG_DIR, "ira_atacando")
+    ira_attack_frames = []
+    if os.path.isdir(ira_attack_folder):
+        files = [f for f in os.listdir(ira_attack_folder) if f.lower().endswith(".png")]
+        files = sorted(files, key=_numeric_sort_key)
+        for fn in files:
+            ira_attack_frames.append(pygame.image.load(os.path.join(ira_attack_folder, fn)).convert_alpha())
+    assets[IRA_ATTACK] = ira_attack_frames
+
+    IRA_DIE = 'ira_die'
+    ira_die_folder = os.path.join(IMG_DIR, "ira_morrendo")
+    ira_die_frames = []
+    if os.path.isdir(ira_die_folder):
+        files = [f for f in os.listdir(ira_die_folder) if f.lower().endswith(".png")]
+        files = sorted(files, key=_numeric_sort_key)
+        for fn in files:
+            ira_die_frames.append(pygame.image.load(os.path.join(ira_die_folder, fn)).convert_alpha())
+    assets[IRA_DIE] = ira_die_frames
+
     return assets

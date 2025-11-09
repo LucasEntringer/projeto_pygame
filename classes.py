@@ -14,6 +14,16 @@ class Dante(pygame.sprite.Sprite):
         # frames pré-cortados: list length == 8
         self.walk_frames = assets[DANTE_WALK]
 
+        # frames de ataque do Dante
+        self.attack_frames = assets.get('dante_attack', [])
+        self.is_attacking = False
+        self.attack_frame_index = 0
+        self.attack_timer = 0
+        self.attack_frame_delay = 120  # ms por frame de ataque
+        self.attack_damage = 25        # ajuste de dano do ataque do Dante
+        # alcance do ataque frontal (px)
+        self.attack_range = 90
+
         # frames de morte
         self.die_frames = assets.get('dante_die', [])
         # estado específico para morte: notificação se está tocando
@@ -154,7 +164,27 @@ class Dante(pygame.sprite.Sprite):
         else:
             new_image = self.walk_left[frame_number]
 
-        # preserva ponto de ancoragem (evita "sobe" ao andar)
+        # --- se estiver atacando, prioriza a animação de ataque
+        if getattr(self, 'is_attacking', False) and self.attack_frames:
+            self.attack_timer += dt
+            if self.attack_timer >= self.attack_frame_delay:
+                self.attack_timer -= self.attack_frame_delay
+                self.attack_frame_index += 1
+                if self.attack_frame_index >= len(self.attack_frames):
+                    # fim da animação de ataque
+                    self.is_attacking = False
+                    self.attack_frame_index = 0
+            # aplica frame de ataque atual
+            af = self.attack_frames[min(self.attack_frame_index, len(self.attack_frames)-1)]
+            if self.facing == -1:
+                af = pygame.transform.flip(af, True, False)
+            anchor = self.rect.midbottom
+            self.image = af
+            self.rect = self.image.get_rect()
+            self.rect.midbottom = anchor
+            return
+
+        # preserva ponto de ancoragem (evita subir ao andar)
         anchor = self.rect.midbottom
         self.image = new_image
         self.rect = self.image.get_rect()
@@ -213,3 +243,31 @@ class Dante(pygame.sprite.Sprite):
         # decrementa a vida imediatamente
         self.lives = max(0, self.lives - 1)
         # se zerou vidas, chamará morrer()
+
+    def attack(self, enemies_group):
+        """
+        Inicia um ataque: aplica dano imediato aos inimigos próximos e toca animação.
+        enemies_group: pygame.sprite.Group com inimigos.
+        """
+        # se está morrendo/recebendo dano, ignora
+        if getattr(self, 'is_dying', False) or getattr(self, 'is_hurt', False):
+            return
+
+        # dispara animação simples
+        if self.attack_frames:
+            self.is_attacking = True
+            self.attack_frame_index = 0
+            self.attack_timer = 0
+        # aplica dano a inimigos próximos
+        for e in enemies_group:
+            # checa distância horizontal simples
+            if abs(e.rect.centerx - self.rect.centerx) <= self.attack_range:
+                # aplica dano (Enemy deve ter método take_damage)
+                if hasattr(e, 'take_damage'):
+                    e.take_damage(self.attack_damage)
+                else:
+                    # fallback: reduce hp attribute if existir
+                    if hasattr(e, 'hp'):
+                        e.hp -= self.attack_damage
+                        if getattr(e, 'hp', 1) <= 0 and hasattr(e, 'kill'):
+                            e.kill()
