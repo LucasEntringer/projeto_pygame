@@ -7,6 +7,9 @@ from classes import Dante
 pygame.init()
 window = pygame.display.set_mode((LARGURA, ALTURA))
 clock = pygame.time.Clock()
+font = pygame.font.SysFont("Segoe UI Symbol", 40)  # o número ajusta o tamanho do coração
+# cor dos corações:
+HEART_COLOR = (220, 20, 60)
 
 assets = load_assets()
 all_sprites = pygame.sprite.Group()
@@ -25,7 +28,7 @@ while running:
             if event.key == pygame.K_SPACE:
                 dante.pular()
             if event.key == pygame.K_z:
-                dante.morrer()
+                dante.dano()
                 
     keys = pygame.key.get_pressed()
     left = keys[pygame.K_a] or keys[pygame.K_LEFT]
@@ -43,6 +46,10 @@ while running:
     all_sprites.update(dt)
     window.fill((30,30,30))
     all_sprites.draw(window)
+    hearts = "♥ " * max(0, dante.lives)
+    if hearts:
+        heart_surf = font.render(hearts, True, HEART_COLOR)
+        window.blit(heart_surf, (10, 10))
     pygame.display.flip()
 
 pygame.quit()

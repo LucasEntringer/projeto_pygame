@@ -14,8 +14,6 @@ def _numeric_sort_key(name):
 def load_assets():
     assets = {}
     folder = os.path.join(IMG_DIR, "andando")  # pasta onde você colocou os 8 frames
-    if not os.path.isdir(folder):
-        raise FileNotFoundError(f"Pasta de frames não encontrada: {folder}")
 
     files = [f for f in os.listdir(folder) if f.lower().endswith(".png")]
     files = sorted(files, key=_numeric_sort_key)
@@ -25,11 +23,8 @@ def load_assets():
         path = os.path.join(folder, fn)
         img = pygame.image.load(path).convert_alpha()
         frames.append(img)
-
-    if len(frames) == 0:
-        raise RuntimeError("Nenhum frame encontrado em " + folder)
-
     assets[DANTE_WALK] = frames
+
     DANTE_DIE = 'dante_die'
     morrendo_folder = os.path.join(IMG_DIR, "morrendo")
     die_frames = []
@@ -40,5 +35,15 @@ def load_assets():
             path = os.path.join(morrendo_folder, fn)
             die_frames.append(pygame.image.load(path).convert_alpha())
     assets[DANTE_DIE] = die_frames
-    
+
+    DANTE_HURT = 'dante_hurt'
+    hurt_folder = os.path.join(IMG_DIR, "dano")
+    hurt_frames = []
+    if os.path.isdir(hurt_folder):
+        hurt_files = [f for f in os.listdir(hurt_folder) if f.lower().endswith(".png")]
+        # ordena por número no nome (Dante_hurt.1.png ...)
+        hurt_files = sorted(hurt_files, key=_numeric_sort_key)
+        for fn in hurt_files:
+            hurt_frames.append(pygame.image.load(os.path.join(hurt_folder, fn)).convert_alpha())
+    assets[DANTE_HURT] = hurt_frames
     return assets
