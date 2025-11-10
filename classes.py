@@ -35,7 +35,7 @@ class Dante(pygame.sprite.Sprite):
         self.attack_frame_delay = 30  # ms por frame de ataque
         self.attack_damage = 20        # dano em HP (ajuste)
         # alcance do ataque frontal (px)
-        self.attack_range = 90
+        self.attack_range = 120
 
         # frames de morte
         self.die_frames = assets.get('dante_die', [])
