@@ -1,7 +1,7 @@
 import pygame
 import random
 
-BOSS_ATTACK_INTERVAL = 2500   # ms entre ataques (padrão)
+BOSS_ATTACK_INTERVAL = 2000   # ms entre ataques (padrão)
 TRACE_COUNT = 16               # quantos traços por ataque
 TRACE_WARNING_DURATION = 1500  # ms tempo dos traços em alerta
 TRACE_ACTIVE_DURATION = 2000   # ms que cada traço fica ativo
