@@ -5,8 +5,8 @@ import random
 # ====== Configuráveis (edite aqui se quiser ajustar rápido) ======
 BOSS_ATTACK_INTERVAL = 2000   # ms entre ataques (padrão)
 TRACE_COUNT = 4               # quantos traços por ataque
-TRACE_WARNING_DURATION = 500  #Tempo dos traços em alerta
-TRACE_ACTIVE_DURATION = 700          # ms que cada traço fica ativo
+TRACE_WARNING_DURATION = 1500  #Tempo dos traços em alerta
+TRACE_ACTIVE_DURATION = 2000          # ms que cada traço fica ativo
 FURY_MULT = 1.5               # multiplicador quando o boss entra em fúria
 TRACE_WIDTH = 80
 TRACE_HEIGHT = 18
@@ -114,7 +114,10 @@ class BossIra(pygame.sprite.Sprite):
             h = TRACE_HEIGHT
             x = random.randint(100, max(100, window_width - 100 - w))
             y = ground_y - h - TRACE_MARGIN_BOTTOM
-            r = pygame.Rect(x, y, w, h)
+            #hitbox do traço é menor que o próprio traço
+            pad_x = 8   # ajuste: quanto cortar de cada lado
+            pad_y = 4   # ajuste vertical
+            r = pygame.Rect(x + pad_x, y + pad_y, max(4, w - 2*pad_x), max(4, h - 2*pad_y))
             warn_until = now + TRACE_WARNING_DURATION
             active_until = warn_until + TRACE_ACTIVE_DURATION
             # store both times and a flag 'active' computed dinamicamente

@@ -83,12 +83,16 @@ while running:
     if boss is not None:
         now = pygame.time.get_ticks()
         for t in list(boss.traces):
-            #Só causa dano se estamos na fase ACTIVE
             if now >= t['warn_until'] and now < t['active_until']:
-                if dante.rect.colliderect(t['rect']):
-                    #aplica o dano e expira o traço para não dar mais de um hit
-                    dante.dano(amount = boss.damage)
-                    #expira o trace automaticamente:
+                # cria a hitbox dos pés do Dante (ajuste offsets conforme seu sprite)
+                feet_h = 12                         # altura da caixa dos pés
+                feet_w = max(24, int(dante.rect.width * 0.5))  # largura dos pés
+                feet_x = dante.rect.centerx - feet_w // 2
+                feet_y = dante.rect.bottom - feet_h
+                feet_rect = pygame.Rect(feet_x, feet_y, feet_w, feet_h)
+
+                if feet_rect.colliderect(t['rect']):
+                    dante.dano(amount=boss.damage)
                     t['active_until'] = now - 1
         
     #Se o boss morreu, limpa e permite continuar
