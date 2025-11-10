@@ -1,7 +1,11 @@
 # jogo.py (modificado: adiciona Gula e mantém Ira)
 import pygame
 import os
+<<<<<<< HEAD
 from config import LARGURA, ALTURA, FPS, IMG_DIR
+=======
+from config import LARGURA, ALTURA, FPS,  IMG_DIR, SND_DIR
+>>>>>>> ed30b935d1a14470edf1d897e231578f58b33bdc
 from assets import load_assets
 from ira import BossIra
 from classes import Dante
@@ -54,6 +58,7 @@ while running:
             if event.key == pygame.K_SPACE:
                 dante.pular()
             if event.key == pygame.K_z:
+                assets['atk_sound'].play()
                 dante.attack(enemies)
                 for e in enemies:
                     if hasattr(e, 'notify_player_attack'):
