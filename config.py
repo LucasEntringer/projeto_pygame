@@ -20,5 +20,6 @@ SND_DIR=path.join(path.dirname(__file__), 'assets', 'sounds')
 MENU_STATE=0
 GAME_STATE=1
 EXIT_STATE=2
+GAME_OVER_STATE=3
 
 

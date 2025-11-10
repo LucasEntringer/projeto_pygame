@@ -1,6 +1,6 @@
 import pygame
 import os
-from config import LARGURA, ALTURA, FPS, IMG_DIR, SND_DIR, MENU_STATE, GAME_STATE, EXIT_STATE
+from config import LARGURA, ALTURA, FPS, IMG_DIR, SND_DIR, MENU_STATE, GAME_STATE, EXIT_STATE, GAME_OVER_STATE
 from assets import load_assets
 from ira import BossIra
 from classes import Dante
@@ -197,6 +197,11 @@ def game_screen(window, clock, assets):
             except Exception:
                 pass
             gula = None
+        
+        if dante.lives<=0:
+            running = False
+
+            return GAME_OVER_STATE
 
         if bg:
             window.blit(bg, (0, 0))
@@ -261,6 +266,36 @@ def game_screen(window, clock, assets):
         pygame.display.flip()
     return MENU_STATE
 
+def game_over_screen(window, clock, assets):
+    font_titulo = pygame.font.SysFont("Arial", 70)
+    font_instrucao = pygame.font.SysFont("Arial", 30)
+    VERMELHO = (200, 0, 0)
+    BRANCO = (255, 255, 255)
+    PRETO = (0, 0, 0)
+
+    running_game_over = True
+    while running_game_over:
+        clock.tick(FPS)
+
+    for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return EXIT_STATE
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return MENU_STATE
+    
+    window.fill(PRETO)
+
+    text_go = font_titulo.render("GAME OVER", True, VERMELHO)
+    text_go_rect = text_go.get_rect(center=(LARGURA // 2, ALTURA // 2 - 50))
+    window.blit(text_go, text_go_rect)
+
+    text_inst = font_instrucao.render("Pressione ESC para voltar ao Menu", True, BRANCO)
+    text_inst_rect = text_inst.get_rect(center=(LARGURA // 2, ALTURA // 2 + 50))
+    window.blit(text_inst, text_inst_rect)
+
+    pygame.display.flip()
+
 def main():
     pygame.init()
     pygame.mixer.init()
@@ -283,6 +318,9 @@ def main():
         elif current_state == GAME_STATE:
             # Chama a função do jogo (seu código original)
             current_state = game_screen(window, clock, assets)
+        
+        elif current_state == GAME_OVER_STATE:
+            current_state == game_over_screen(window, clock, assets)
 
     pygame.quit()
 
