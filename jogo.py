@@ -1,11 +1,7 @@
 # jogo.py (modificado: adiciona Gula e mantém Ira)
 import pygame
 import os
-<<<<<<< HEAD
-from config import LARGURA, ALTURA, FPS, IMG_DIR
-=======
 from config import LARGURA, ALTURA, FPS,  IMG_DIR, SND_DIR
->>>>>>> ed30b935d1a14470edf1d897e231578f58b33bdc
 from assets import load_assets
 from ira import BossIra
 from classes import Dante
