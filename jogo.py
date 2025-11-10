@@ -117,6 +117,40 @@ while running:
     if boss is not None:
         window.blit(boss.image, boss.rect)
 
+    # --- HUD do boss: nome e barra de vida ---
+    if boss is not None:
+        # parâmetros visuais
+        bar_w = 420
+        bar_h = 18
+        margin_top = 8
+        x = (LARGURA - bar_w) // 2
+        y = margin_top
+
+        # fundo (caixa escura)
+        bg_rect = pygame.Rect(x-4, y-6, bar_w+8, bar_h+28)
+        s_bg = pygame.Surface((bg_rect.w, bg_rect.h), pygame.SRCALPHA)
+        s_bg.fill((10, 10, 10, 180))
+        window.blit(s_bg, (bg_rect.x, bg_rect.y))
+
+        # nome do boss
+        name_font = pygame.font.SysFont(None, 28)  # usa fonte do sistema; ajuste se quiser
+        name_surf = name_font.render("IRA", True, (230,230,230))
+        name_pos = (x + (bar_w - name_surf.get_width())//2, y - 2)
+        window.blit(name_surf, name_pos)
+
+        # barra de vida (proporcional)
+        hp_pct = max(0.0, boss.hp) / max(1, boss.base_hp)
+        hp_w = int(bar_w * hp_pct)
+        bar_rect = pygame.Rect(x, y + 18, bar_w, bar_h)
+        hp_rect = pygame.Rect(x, y + 18, hp_w, bar_h)
+
+        # desenha background da barra
+        pygame.draw.rect(window, (60,60,60), bar_rect)
+        # desenha vida restante
+        pygame.draw.rect(window, (200,40,40), hp_rect)
+        # borda
+        pygame.draw.rect(window, (20,20,20), bar_rect, 2)
+
     hearts = "♥ " * max(0, dante.lives)
     if hearts:
         heart_surf = font.render(hearts, True, HEART_COLOR)
