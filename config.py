@@ -9,3 +9,7 @@ IMG_DIR = path.join(path.dirname(__file__), 'assets', 'imagens')
 
 FPS = 60
 GRAVIDADE = 1
+
+#Pasta que contem os sons
+
+SND_DIR=path.join(path.dirname(__file__), 'assets', 'sounds')

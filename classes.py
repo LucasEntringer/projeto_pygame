@@ -32,8 +32,8 @@ class Dante(pygame.sprite.Sprite):
         self.is_attacking = False
         self.attack_frame_index = 0
         self.attack_timer = 0
-        self.attack_frame_delay = 120  # ms por frame de ataque
-        self.attack_damage = 25        # dano em HP (ajuste)
+        self.attack_frame_delay = 30  # ms por frame de ataque
+        self.attack_damage = 20        # dano em HP (ajuste)
         # alcance do ataque frontal (px)
         self.attack_range = 90
 
@@ -73,6 +73,8 @@ class Dante(pygame.sprite.Sprite):
         self.speedy = 0
         self.no_chao = True
         self.facing = 1
+        self.max_jumps = 2   # pulo normal + 1 pulo extra no ar
+        self.jumps = self.max_jumps
 
     def set_state(self, new_state):
         if new_state == self.state: return
@@ -116,6 +118,8 @@ class Dante(pygame.sprite.Sprite):
             self.rect.bottom = ALTURA - 10
             self.speedy = 0
             self.no_chao = True
+            #reseta o máximo de pulos quando no chão
+            self.jumps = self.max_jumps
         if self.rect.top <= 0:
             self.rect.top = 0
             self.speedy = 0
@@ -212,9 +216,16 @@ class Dante(pygame.sprite.Sprite):
         self.speedx = 0
 
     def pular(self, power=-20):         # o número altera a altura do pulo
-        if self.no_chao:
+        # se está morrendo/recebendo dano, ignora pulo (opcional)
+        if getattr(self, 'is_dying', False) or getattr(self, 'is_hurt', False):
+            return
+
+        # só permite pular se houver 'jumps' disponíveis
+        if self.jumps > 0:
+            # se estiver no chão, pode pular normalmente
             self.speedy = power
             self.no_chao = False
+            self.jumps -= 1
 
     def morrer(self):
         # se não há frames de morte, só retorna (mas bloqueia movimento)
