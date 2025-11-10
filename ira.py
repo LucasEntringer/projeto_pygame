@@ -1,7 +1,7 @@
 import pygame
 import random
 
-BOSS_ATTACK_INTERVAL = 2000   # ms entre ataques (padrão)
+BOSS_ATTACK_INTERVAL = 2500   # ms entre ataques (padrão)
 TRACE_COUNT = 16               # quantos traços por ataque
 TRACE_WARNING_DURATION = 1500  # ms tempo dos traços em alerta
 TRACE_ACTIVE_DURATION = 2000   # ms que cada traço fica ativo
@@ -77,7 +77,7 @@ class BossIra(pygame.sprite.Sprite):
         if not self.fury:
             self.fury = True
             self.hp = int(self.hp * FURY_MULT)
-            self.damage = int(self.damage * FURY_MULT)
+            # self.damage = int(self.damage * FURY_MULT)
             try:
                 temp = self.image.copy()
                 temp.fill((200, 40, 40), special_flags=pygame.BLEND_RGBA_ADD)
@@ -86,10 +86,21 @@ class BossIra(pygame.sprite.Sprite):
                 pass
 
     def notify_player_attack(self):
-        if self.player_attacked_first is None and self.attack_timer < 1:
+        if self.player_attacked_first is not None:
+            return
+
+        # Se já gerou traços, o boss já começou a atacar → jogador não atacou primeiro
+        if self.traces:
+            self.player_attacked_first = False
+            return
+
+        # tolerância: se o jogador atacou dentro dos primeiros 35% do intervalo
+        threshold = max(2500, int(self.attack_interval * 0.35))  # Se atacar antes que o boss, ativa
+        if self.attack_timer <= threshold:
             self.player_attacked_first = True
             self.apply_fury()
-
+        else:
+            self.player_attacked_first = False
     def take_damage(self, amount):
         """Aplica dano e inicia animação de morte (não mata imediatamente)."""
         if not self.alive_flag:
