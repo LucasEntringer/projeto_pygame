@@ -2,7 +2,7 @@
 import os
 import re
 import pygame
-from config import IMG_DIR  # IMG_DIR = "assets/imagens"
+from config import IMG_DIR,SND_DIR  # IMG_DIR = "assets/imagens"
 
 DANTE_WALK = 'dante_walk'
 
@@ -83,5 +83,12 @@ def load_assets():
         for fn in files:
             ira_die_frames.append(pygame.image.load(os.path.join(ira_die_folder, fn)).convert_alpha())
     assets[IRA_DIE] = ira_die_frames
+
+    #Trilha sonora
+
+    pygame.mixer.music.load(os.path.join(SND_DIR, 'Verdi_s-Requiem_-II.-Dies-Irae-_CUGMZlvrR4c_.ogg'))
+
+    pygame.mixer.music.set_volume(0.5)
+
 
     return assets
