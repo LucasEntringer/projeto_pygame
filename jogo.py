@@ -87,9 +87,9 @@ while running:
         now = pygame.time.get_ticks()
         for t in list(boss.traces):
             if now >= t['warn_until'] and now < t['active_until']:
-                # cria a hitbox dos pés do Dante (ajuste offsets conforme seu sprite)
+                # cria a hitbox dos pés do Dante
                 feet_h = 12                         # altura da caixa dos pés
-                feet_w = max(24, int(dante.rect.width * 0.5))  # largura dos pés
+                feet_w = max(24, int(dante.rect.width * 0.3))  # largura dos pés
                 feet_x = dante.rect.centerx - feet_w // 2
                 feet_y = dante.rect.bottom - feet_h
                 feet_rect = pygame.Rect(feet_x, feet_y, feet_w, feet_h)
