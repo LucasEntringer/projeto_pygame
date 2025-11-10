@@ -148,6 +148,8 @@ def load_assets():
 
     ATK_SOUND='atk_sound'
     assets[ATK_SOUND]=pygame.mixer.Sound(os.path.join(SND_DIR,'sword-slash-and-swing-185432.wav'))
+    HURT_SOUND = 'hurt_sound'
+    assets[HURT_SOUND] = pygame.mixer.Sound(os.path.join(SND_DIR,'male_hurt7-48124.wav'))
 
 
     return assets
