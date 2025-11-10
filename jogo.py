@@ -1,7 +1,7 @@
 # jogo.py (trecho relevante)
 import pygame
 import os
-from config import LARGURA, ALTURA, FPS,  IMG_DIR
+from config import LARGURA, ALTURA, FPS,  IMG_DIR, SND_DIR
 from assets import load_assets
 from ira import BossIra
 from classes import Dante
@@ -49,6 +49,7 @@ while running:
             if event.key == pygame.K_SPACE:
                 dante.pular()
             if event.key == pygame.K_z:
+                assets['atk_sound'].play()
                 dante.attack(enemies)
                 #Identifica se atacou antes do boss:
                 if boss is not None:
