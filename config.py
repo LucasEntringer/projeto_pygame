@@ -13,3 +13,12 @@ GRAVIDADE = 1
 #Pasta que contem os sons
 
 SND_DIR=path.join(path.dirname(__file__), 'assets', 'sounds')
+
+
+#Controle de fluxos
+
+MENU_STATE=0
+GAME_STATE=1
+EXIT_STATE=2
+
+
