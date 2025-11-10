@@ -8,6 +8,7 @@ from classes import Dante
 import random
 
 pygame.init()
+pygame.mixer.init()
 window = pygame.display.set_mode((LARGURA, ALTURA))
 clock = pygame.time.Clock()
 font = pygame.font.SysFont("Segoe UI Symbol", 40)  # o número ajusta o tamanho do coração
@@ -24,6 +25,8 @@ dante = Dante(groups=[all_sprites], assets=assets)
 boss = None
 
 running = True
+
+pygame.mixer.music.play(loops=-1)
 while running:
     dt = clock.tick(FPS)  # dt em ms
 
