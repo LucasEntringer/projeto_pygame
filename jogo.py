@@ -1,7 +1,6 @@
-# jogo.py (modificado: adiciona Gula e mantém Ira)
 import pygame
 import os
-from config import LARGURA, ALTURA, FPS,  IMG_DIR, SND_DIR
+from config import LARGURA, ALTURA, FPS, IMG_DIR
 from assets import load_assets
 from ira import BossIra
 from classes import Dante
@@ -19,17 +18,13 @@ assets = load_assets()
 all_sprites = pygame.sprite.Group()
 enemies = pygame.sprite.Group()
 
-# player
 dante = Dante(groups=[all_sprites], assets=assets)
 
-# cria Gula no começo do jogo
 bx = LARGURA // 2 + 100
 by = ALTURA - 10
 gula = BossGula(bx, by, assets=assets, patrol_min_x=120, patrol_max_x=LARGURA - 120, speed=2.0)
 enemies.add(gula)
-all_sprites.add(gula)
 
-# Ira será criada quando o Dante chegar ao fim da tela
 ira = None
 
 running = True
@@ -54,7 +49,6 @@ while running:
             if event.key == pygame.K_SPACE:
                 dante.pular()
             if event.key == pygame.K_z:
-                assets['atk_sound'].play()
                 dante.attack(enemies)
                 for e in enemies:
                     if hasattr(e, 'notify_player_attack'):
@@ -76,7 +70,6 @@ while running:
     else:
         dante.parar()
 
-    # cria a Ira quando o Dante chega ao fim da tela
     if ira is None and dante.rect.centerx >= LARGURA - 120:
         dante.rect.midbottom = (140, ALTURA - 10)
         dante.parar()
@@ -84,7 +77,6 @@ while running:
         by = ALTURA - 10
         ira = BossIra(bx, by, assets=assets)
         enemies.add(ira)
-        all_sprites.add(ira)
 
     all_sprites.update(dt)
 
@@ -93,9 +85,16 @@ while running:
         try:
             e.update(dt, window_width=LARGURA, ground_y=ALTURA, player=dante)
         except TypeError:
-            e.update(dt, window_width=LARGURA, ground_y=ALTURA)
+            try:
+                e.update(dt, window_width=LARGURA, ground_y=ALTURA)
+            except Exception:
+                try:
+                    e.update(dt)
+                except Exception:
+                    pass
+        except Exception:
+            pass
 
-        # --- colisão com os traços da Ira ---
         if hasattr(e, 'traces') and getattr(e, 'traces'):
             for t in list(e.traces):
                 if now >= t['warn_until'] and now < t['active_until']:
@@ -104,7 +103,6 @@ while running:
                     feet_x = dante.rect.centerx - feet_w // 2
                     feet_y = dante.rect.bottom - feet_h
                     feet_rect = pygame.Rect(feet_x, feet_y, feet_w, feet_h)
-
                     if feet_rect.colliderect(t['rect']):
                         try:
                             dante.dano(amount=e.damage)
@@ -112,18 +110,19 @@ while running:
                             dante.dano(amount=20)
                         t['active_until'] = now - 1
 
-        # --- colisão com as coxas do Gula ---
         if hasattr(e, 'coxas') and getattr(e, 'coxas'):
             for c in list(e.coxas):
                 c_rect = c.get('render_rect') if c.get('render_rect') else c['rect']
                 if dante.rect.colliderect(c_rect):
-                    dante.dano(amount=c.get('dano', 18))
+                    try:
+                        dante.dano(amount=c.get('dano', 18))
+                    except Exception:
+                        dante.dano(amount=18)
                     try:
                         e.coxas.remove(c)
                     except ValueError:
                         pass
 
-    # remove Ira se ela morreu
     if ira is not None and not ira.alive_flag:
         try:
             ira.kill()
@@ -131,19 +130,18 @@ while running:
             pass
         ira = None
 
-    # remove Gula se ela morreu
     if gula is not None and not gula.alive_flag:
         try:
             gula.kill()
         except Exception:
             pass
-        gula = None
+        # remove referência local; também remove do grupo enemies
         try:
             enemies.remove(gula)
         except Exception:
             pass
+        gula = None
 
-    # --- desenha ---
     if bg:
         window.blit(bg, (0, 0))
     else:
@@ -157,6 +155,15 @@ while running:
                 pass
 
     all_sprites.draw(window)
+
+    try:
+        enemies.draw(window)
+    except Exception:
+        for e in enemies:
+            try:
+                window.blit(e.image, e.rect)
+            except Exception:
+                pass
 
     boss_for_hud = None
     if ira is not None:
