@@ -84,6 +84,48 @@ def load_assets():
             ira_die_frames.append(pygame.image.load(os.path.join(ira_die_folder, fn)).convert_alpha())
     assets[IRA_DIE] = ira_die_frames
 
+        # GULA
+    GULA_IDLE = 'gula_idle'
+    gula_idle_folder = os.path.join(IMG_DIR, "gula_parado")
+    gula_idle_frames = []
+    if os.path.isdir(gula_idle_folder):
+        files = [f for f in os.listdir(gula_idle_folder) if f.lower().endswith(".png")]
+        files = sorted(files, key=_numeric_sort_key)
+        for fn in files:
+            gula_idle_frames.append(pygame.image.load(os.path.join(gula_idle_folder, fn)).convert_alpha())
+    assets[GULA_IDLE] = gula_idle_frames
+
+    GULA_WALK = 'gula_walk'
+    gula_walk_folder = os.path.join(IMG_DIR, "gula_andando")
+    gula_walk_frames = []
+    if os.path.isdir(gula_walk_folder):
+        files = [f for f in os.listdir(gula_walk_folder) if f.lower().endswith(".png")]
+        files = sorted(files, key=_numeric_sort_key)
+        for fn in files:
+            gula_walk_frames.append(pygame.image.load(os.path.join(gula_walk_folder, fn)).convert_alpha())
+    assets[GULA_WALK] = gula_walk_frames
+
+    GULA_ATTACK = 'gula_attack'
+    gula_attack_folder = os.path.join(IMG_DIR, "gula_ataque")
+    gula_attack_frames = []
+    if os.path.isdir(gula_attack_folder):
+        files = [f for f in os.listdir(gula_attack_folder) if f.lower().endswith(".png")]
+        files = sorted(files, key=_numeric_sort_key)
+        for fn in files:
+            gula_attack_frames.append(pygame.image.load(os.path.join(gula_attack_folder, fn)).convert_alpha())
+    assets[GULA_ATTACK] = gula_attack_frames
+
+    GULA_DIE = 'gula_die'
+    gula_die_folder = os.path.join(IMG_DIR, "gula_morrendo")
+    gula_die_frames = []
+    if os.path.isdir(gula_die_folder):
+        files = [f for f in os.listdir(gula_die_folder) if f.lower().endswith(".png")]
+        files = sorted(files, key=_numeric_sort_key)
+        for fn in files:
+            gula_die_frames.append(pygame.image.load(os.path.join(gula_die_folder, fn)).convert_alpha())
+    assets[GULA_DIE] = gula_die_frames
+
+
     #Trilha sonora
 
     pygame.mixer.music.load(os.path.join(SND_DIR, 'Verdi_s-Requiem_-II.-Dies-Irae-_CUGMZlvrR4c_.ogg'))
