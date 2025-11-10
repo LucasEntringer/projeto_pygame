@@ -5,7 +5,8 @@ import random
 # ====== Configuráveis (edite aqui se quiser ajustar rápido) ======
 BOSS_ATTACK_INTERVAL = 2000   # ms entre ataques (padrão)
 TRACE_COUNT = 4               # quantos traços por ataque
-TRACE_DURATION = 700          # ms que cada traço fica ativo
+TRACE_WARNING_DURATION = 500  #Tempo dos traços em alerta
+TRACE_ACTIVE_DURATION = 700          # ms que cada traço fica ativo
 FURY_MULT = 1.5               # multiplicador quando o boss entra em fúria
 TRACE_WIDTH = 80
 TRACE_HEIGHT = 18
@@ -87,16 +88,23 @@ class BossIra(pygame.sprite.Sprite):
             self.alive_flag = False
 
     def spawn_traces(self, window_width, ground_y, count=TRACE_COUNT):
-        """Gera traços aleatórios no chão dentro de 100..window_width-100."""
+        """Gera traços com fase de warning (pisca) e em seguida fase ativa (causa dano)."""
         self.traces = []
+        now = pygame.time.get_ticks()
         for i in range(count):
             w = TRACE_WIDTH
             h = TRACE_HEIGHT
             x = random.randint(100, max(100, window_width - 100 - w))
             y = ground_y - h - TRACE_MARGIN_BOTTOM
             r = pygame.Rect(x, y, w, h)
-            expire = pygame.time.get_ticks() + TRACE_DURATION
-            self.traces.append({'rect': r, 'expire': expire})
+            warn_until = now + TRACE_WARNING_DURATION
+            active_until = warn_until + TRACE_ACTIVE_DURATION
+            # store both times and a flag 'active' computed dinamicamente
+            self.traces.append({
+                'rect': r,
+                'warn_until': warn_until,
+                'active_until': active_until,
+            })
 
     def update(self, dt, window_width=None, ground_y=None):
         """
@@ -135,12 +143,27 @@ class BossIra(pygame.sprite.Sprite):
 
         # limpa traces expiradas
         now = pygame.time.get_ticks()
-        self.traces = [t for t in self.traces if t['expire'] > now]
+        self.traces = [t for t in self.traces if t['active_until'] > now]
 
     def draw_traces(self, surface):
-        """Desenha os traços sobre a surface (usar antes de desenhar sprites)."""
+        """Desenha os traços; piscam enquanto em WARNING e ficam sólidos durante ACTIVE."""
+        now = pygame.time.get_ticks()
         for t in self.traces:
-            alpha = 160 + int(80 * (0.5 + 0.5 * ((pygame.time.get_ticks() % 400) / 400)))
-            s = pygame.Surface((t['rect'].w, t['rect'].h), pygame.SRCALPHA)
-            s.fill((255, 60, 60, alpha))
-            surface.blit(s, (t['rect'].x, t['rect'].y))
+            r = t['rect']
+            # fase warning
+            if now < t['warn_until']:
+                # pisca: alterna visível/invisível a cada 120ms
+                blink_period = 120
+                show = ((now // blink_period) % 2) == 0
+                if show:
+                    alpha = 140 + int(80 * ((now % blink_period) / blink_period))
+                    s = pygame.Surface((r.w, r.h), pygame.SRCALPHA)
+                    s.fill((255, 90, 60, alpha))
+                    surface.blit(s, (r.x, r.y))
+            # fase ativa
+            elif now < t['active_until']:
+                s = pygame.Surface((r.w, r.h), pygame.SRCALPHA)
+                s.fill((255, 60, 60, 200))
+                surface.blit(s, (r.x, r.y))
+            # else: já expirada — será limpa no update()
+

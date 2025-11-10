@@ -7,12 +7,6 @@ from ira import BossIra
 from classes import Dante
 import random
 
-#Configurações da Ira:
-BOOS_ATTACK_INTERVAL = 2000     #ms entre os ataques
-TRACE_COUNT = 4                 #Quantidade de traços por ataque
-TRACE_DURATION = 700            #ms que cada traço fica ativo
-FURY_MULT = 1.5                 #multipllicador do modo fúria
-
 pygame.init()
 window = pygame.display.set_mode((LARGURA, ALTURA))
 clock = pygame.time.Clock()
@@ -79,26 +73,24 @@ while running:
         by = ALTURA - 10
         boss = BossIra(bx, by, assets=assets)
         enemies.add(boss)
-        all_sprites.add(boss)
 
     all_sprites.update(dt)
 
     #checa se há colisão entre os traços do boss e o dante
     if boss is not None:
-        try:
-            boss.update(dt, window_width=LARGURA, ground_y= ALTURA)
-        except TypeError:
-            boss.update(dt)
+        boss.update(dt, window_width=LARGURA, ground_y= ALTURA)
     
     if boss is not None:
         now = pygame.time.get_ticks()
         for t in list(boss.traces):
-            if dante.rect.colliderect(t['rect']):
-                #aplica o dano e expira o traço para não dar mais de um hit
-                dante.dano()
-                #expira o trace automaticamente:
-                t['expire'] = now - 1
-    
+            #Só causa dano se estamos na fase ACTIVE
+            if now >= t['warn_until'] and now < t['active_until']:
+                if dante.rect.colliderect(t['rect']):
+                    #aplica o dano e expira o traço para não dar mais de um hit
+                    dante.dano(amount = boss.damage)
+                    #expira o trace automaticamente:
+                    t['active_until'] = now - 1
+        
     #Se o boss morreu, limpa e permite continuar
     if boss is not None and not boss.alive_flag:
         #remove o boss:
@@ -118,6 +110,9 @@ while running:
         boss.draw_traces(window)
     
     all_sprites.draw(window)
+    if boss is not None:
+        window.blit(boss.image, boss.rect)
+
     hearts = "♥ " * max(0, dante.lives)
     if hearts:
         heart_surf = font.render(hearts, True, HEART_COLOR)

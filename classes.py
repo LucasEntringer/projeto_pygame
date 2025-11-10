@@ -1,17 +1,30 @@
-# classes.py (trecho)
+# classes.py (trecho Dante corrigido)
 import pygame
 from config import LARGURA, ALTURA, GRAVIDADE
 from assets import DANTE_WALK
 import sys
+import math
 
 class Dante(pygame.sprite.Sprite):
     def __init__(self, groups=None, assets=None):
-        self.lives = 5  # número de vidas iniciais
+        # vida visual (corações) fica por compatibilidade, mas usamos HP interno
+        # HP interno: 100 (5 corações de 20 HP cada)
+        self.max_hp = 100
+        self.hp_per_heart = 20
+        self.hp = self.max_hp
+        self.lives = math.ceil(self.hp / self.hp_per_heart)
 
-        if groups is None: groups = []
-        super().__init__(groups)
+        # lidar com groups: mais confiável adicionar manualmente
+        if groups is None:
+            groups = []
+        super().__init__()  # não passar groups direto para evitar incompatibilidade
+        for g in groups:
+            try:
+                g.add(self)
+            except Exception:
+                pass
 
-        # frames pré-cortados: list length == 8
+        # frames pré-cortados: lista com frames do walk (supõe que assets exista)
         self.walk_frames = assets[DANTE_WALK]
 
         # frames de ataque do Dante
@@ -20,23 +33,21 @@ class Dante(pygame.sprite.Sprite):
         self.attack_frame_index = 0
         self.attack_timer = 0
         self.attack_frame_delay = 120  # ms por frame de ataque
-        self.attack_damage = 25        # ajuste de dano do ataque do Dante
+        self.attack_damage = 25        # dano em HP (ajuste)
         # alcance do ataque frontal (px)
         self.attack_range = 90
 
         # frames de morte
         self.die_frames = assets.get('dante_die', [])
-        # estado específico para morte: notificação se está tocando
         self.is_dying = False
         self.die_played = False  # marca que a animação de morte já tocou
 
-        # frames de dano
+        # frames de dano (hurt)
         self.hurt_frames = assets.get('dante_hurt', [])
         self.is_hurt = False
-        # tempo específico para hurt 
         self.hurt_delay = 120
 
-        # animação: indices 0..7 da lista walk_frames
+        # animação: índices
         self.anim = {
             'idle': [5],               # frame parado 
             'walk': list(range(len(self.walk_frames))),
@@ -46,7 +57,7 @@ class Dante(pygame.sprite.Sprite):
         self.state = 'idle'
         self.frame_index = 0
         self.frame_timer = 0        # ms
-        self.frame_delay = 200       # ms por frame (ajuste para mais/menos fluidez)
+        self.frame_delay = 200      # ms por frame
 
         # caches flipados (gera uma vez)
         self.walk_right = self.walk_frames
@@ -81,7 +92,6 @@ class Dante(pygame.sprite.Sprite):
                 if self.frame_index >= len(self.hurt_frames):
                     self.frame_index = len(self.hurt_frames) - 1
                     self.is_hurt = False
-                    # se as vidas chegaram a zero, iniciar morte
                     if self.lives <= 0:
                         self.morrer()
             # aplica o frame atual do hurt (espelha se necessário)
@@ -92,9 +102,8 @@ class Dante(pygame.sprite.Sprite):
             self.image = new_image
             self.rect = self.image.get_rect()
             self.rect.midbottom = anchor
-            return  # para aqui: não processa walk/idle enquanto no hit
+            return  # não processa walk/idle enquanto no hit
 
-        # dt é em ms (clock.tick)
         # movimento simples
         self.rect.x += int(self.speedx)
         self.rect.y += int(self.speedy)
@@ -116,19 +125,18 @@ class Dante(pygame.sprite.Sprite):
         self.set_state(desired)
 
         frames_idx_list = self.anim[self.state]
-        # animação com dt em ms
+
+        # animação de morte (se estiver morrendo)
         if self.is_dying:
-            # avança timer
             self.frame_timer += dt
             if self.frame_timer >= self.frame_delay:
                 self.frame_timer -= self.frame_delay
                 self.frame_index += 1
-                # se passou do último frame, finaliza o jogo
                 if self.frame_index >= len(self.die_frames):
                     self.frame_index = len(self.die_frames) - 1
                     self.is_dying = False
                     self.die_played = True
-                    #coloca o ultimo frame vísivel antes de fechar
+                    # coloca o ultimo frame visível antes de fechar
                     new_image = self.die_frames[self.frame_index]
                     if self.facing == -1:
                         new_image = pygame.transform.flip(new_image, True, False)
@@ -138,6 +146,7 @@ class Dante(pygame.sprite.Sprite):
                     self.rect.midbottom = anchor
                     pygame.quit()
                     sys.exit()
+            # aplica frame atual da morte (se ainda dentro do range)
             if self.frame_index < len(self.die_frames):
                 new_image = self.die_frames[self.frame_index]
                 if self.facing == -1:
@@ -146,8 +155,9 @@ class Dante(pygame.sprite.Sprite):
                 self.image = new_image
                 self.rect = self.image.get_rect()
                 self.rect.midbottom = anchor
-            return  # pula resto do update
-        
+            return
+
+        # animação walk/idle normal
         if len(frames_idx_list) > 1:
             self.frame_timer += dt
             if self.frame_timer >= self.frame_delay:
@@ -157,14 +167,14 @@ class Dante(pygame.sprite.Sprite):
             self.frame_index = 0
             self.frame_timer = 0
 
-        # pega frame real (0..7) e aplica flip via cache
-        frame_number = frames_idx_list[self.frame_index]  # index dentro walk_frames
+        # pega frame real (0..n) e aplica flip via cache
+        frame_number = frames_idx_list[self.frame_index]
         if self.facing == 1:
             new_image = self.walk_right[frame_number]
         else:
             new_image = self.walk_left[frame_number]
 
-        # --- se estiver atacando, prioriza a animação de ataque
+        # --- ataque tem prioridade sobre walk ---
         if getattr(self, 'is_attacking', False) and self.attack_frames:
             self.attack_timer += dt
             if self.attack_timer >= self.attack_frame_delay:
@@ -174,7 +184,6 @@ class Dante(pygame.sprite.Sprite):
                     # fim da animação de ataque
                     self.is_attacking = False
                     self.attack_frame_index = 0
-            # aplica frame de ataque atual
             af = self.attack_frames[min(self.attack_frame_index, len(self.attack_frames)-1)]
             if self.facing == -1:
                 af = pygame.transform.flip(af, True, False)
@@ -184,7 +193,7 @@ class Dante(pygame.sprite.Sprite):
             self.rect.midbottom = anchor
             return
 
-        # preserva ponto de ancoragem (evita subir ao andar)
+        # preserva ponto de ancoragem (evita "saltar" ao trocar frames)
         anchor = self.rect.midbottom
         self.image = new_image
         self.rect = self.image.get_rect()
@@ -202,47 +211,55 @@ class Dante(pygame.sprite.Sprite):
     def parar(self):
         self.speedx = 0
 
-    def pular(self, power=-20):         #o número altera a altura do pulo
+    def pular(self, power=-20):         # o número altera a altura do pulo
         if self.no_chao:
             self.speedy = power
             self.no_chao = False
 
     def morrer(self):
+        # se não há frames de morte, só retorna (mas bloqueia movimento)
         if not self.die_frames:
+            # bloqueia o movimento e marca is_dying (mesmo sem animação)
+            self.speedx = 0
+            self.speedy = 0
+            self.no_chao = True
+            self.is_dying = True
             return
-    # bloqueia o movimento
+        # bloqueia o movimento e inicia animação de morrer
         self.speedx = 0
         self.speedy = 0
         self.no_chao = True
-        # inicia a animação de morrer
         self.is_dying = True
         self.die_played = False
         self.state = 'dead'
         self.frame_index = 0
         self.frame_timer = 0
 
-    def dano(self):
-        """Inicia a animação de dano: reduz 1 vida e toca a sequência de hurt_frames."""
+    def dano(self, amount=20):
+        """
+        Aplica dano em HP (amount). Atualiza corações visuais.
+        Por padrão amount=20 (1 coração).
+        """
         # se já morrendo, ignora
         if getattr(self, 'is_dying', False):
             return
-        # se não há frames, apenas reduz vida e checa morte
-        if not self.hurt_frames:
-            self.lives = max(0, self.lives - 1)
-            if self.lives <= 0:
-                self.morrer()
-            return
 
-        # inicia a animação de dano
-        self.is_hurt = True
-        self.frame_index = 0
-        self.frame_timer = 0
-        # travar movimento enquanto recebe dano
+        # aplica dano real
+        self.hp = max(0, self.hp - amount)
+        # recalcula corações
+        self.lives = math.ceil(self.hp / self.hp_per_heart) if self.hp > 0 else 0
+
+        # inicia animação de hit se tiver frames
+        if self.hurt_frames:
+            self.is_hurt = True
+            self.frame_index = 0
+            self.frame_timer = 0
+        # trava movimento enquanto recebe dano
         self.speedx = 0
         self.speedy = 0
-        # decrementa a vida imediatamente
-        self.lives = max(0, self.lives - 1)
-        # se zerou vidas, chamará morrer()
+
+        if self.hp <= 0:
+            self.morrer()
 
     def attack(self, enemies_group):
         """
@@ -253,20 +270,18 @@ class Dante(pygame.sprite.Sprite):
         if getattr(self, 'is_dying', False) or getattr(self, 'is_hurt', False):
             return
 
-        # dispara animação simples
+        # dispara animação de ataque (se houver frames)
         if self.attack_frames:
             self.is_attacking = True
             self.attack_frame_index = 0
             self.attack_timer = 0
-        # aplica dano a inimigos próximos
+
+        # aplica dano a inimigos próximos (usa method take_damage se existir)
         for e in enemies_group:
-            # checa distância horizontal simples
             if abs(e.rect.centerx - self.rect.centerx) <= self.attack_range:
-                # aplica dano (Enemy deve ter método take_damage)
                 if hasattr(e, 'take_damage'):
                     e.take_damage(self.attack_damage)
                 else:
-                    # fallback: reduce hp attribute if existir
                     if hasattr(e, 'hp'):
                         e.hp -= self.attack_damage
                         if getattr(e, 'hp', 1) <= 0 and hasattr(e, 'kill'):
