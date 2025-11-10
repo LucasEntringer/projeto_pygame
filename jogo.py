@@ -7,7 +7,8 @@ from classes import Dante
 from gula import BossGula
 import random
 
-def menu_screen(window, clock):
+def menu_screen(window, clock, assets):
+    assets = load_assets()
     #fontes e cores
     font_menu = pygame.font.SysFont("Arial", 50)
     BTN_COLOR = (100, 100, 100)
@@ -15,7 +16,7 @@ def menu_screen(window, clock):
     TEXT_COLOR = (255, 255, 255)
     PRETO = (0, 0, 0)
 
-    # Definição dos botões (Retângulos)
+    # Definição dos botões
     btn_w, btn_h = 300, 60
     btn_x = (LARGURA - btn_w) // 2
 
@@ -32,8 +33,9 @@ def menu_screen(window, clock):
                 return EXIT_STATE
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1: # 1 = Clique esquerdo
+                if event.button == 1: # 1 é o Clique esquerdo
                     # Verifica se o clique foi em cima do botão "Iniciar"
+                    assets['atk_sound'].play()
                     if start_btn.collidepoint(mouse_pos):
                         return GAME_STATE
             
@@ -63,10 +65,6 @@ def menu_screen(window, clock):
         pygame.display.flip()
 
 
-#pygame.init()
-#pygame.mixer.init()
-#window = pygame.display.set_mode((LARGURA, ALTURA))
-#clock = pygame.time.Clock()
 def game_screen(window, clock, assets):
     font = pygame.font.SysFont("Segoe UI Symbol", 40)
     HEART_COLOR = (220, 20, 60)
@@ -267,22 +265,20 @@ def main():
     pygame.init()
     pygame.mixer.init()
     window = pygame.display.set_mode((LARGURA, ALTURA))
-    pygame.display.set_caption("Meu Jogo com Menu") # Mude o nome aqui
+    pygame.display.set_caption("Meu inferninho")
     clock = pygame.time.Clock()
     
-    # Carrega os assets (só uma vez, aqui)
+    # Carrega os assets
     assets = load_assets()
 
     # Define o estado inicial
     current_state = MENU_STATE
 
-    # Loop do "Chefe"
     while current_state != EXIT_STATE:
         
         if current_state == MENU_STATE:
             # Chama a função do menu
-            # (passamos 'assets' caso o menu precise deles no futuro)
-            current_state = menu_screen(window, clock)
+            current_state = menu_screen(window, clock, assets)
             
         elif current_state == GAME_STATE:
             # Chama a função do jogo (seu código original)
