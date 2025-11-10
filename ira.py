@@ -12,7 +12,7 @@ TRACE_MARGIN_BOTTOM = 10      # distância entre o traço e o "chão" (px)
 ATTACK_ANIM_DELAY = 120       # ms entre frames de animação de ataque
 
 class BossIra(pygame.sprite.Sprite):
-    def __init__(self, x, y, assets, hp=300, damage=18):
+    def __init__(self, x, y, assets, hp=500, damage=18):
         super().__init__()
 
         # assets: tenta ler de assets dict; use fallback se faltar
@@ -113,7 +113,7 @@ class BossIra(pygame.sprite.Sprite):
             x = random.randint(100, max(100, window_width - 100 - w))
             y = ground_y - h - TRACE_MARGIN_BOTTOM
             # hitbox menor que o visual (ajuste pad_x/pad_y conforme preferir)
-            pad_x = 8
+            pad_x = 10
             pad_y = 4
             hit_rect = pygame.Rect(x + pad_x, y + pad_y, max(4, w - 2*pad_x), max(4, h - 2*pad_y))
             # opcional: manter também rect visual se quiser desenhar diferente do hit_rect
