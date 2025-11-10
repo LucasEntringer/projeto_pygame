@@ -125,6 +125,19 @@ def load_assets():
             gula_die_frames.append(pygame.image.load(os.path.join(gula_die_folder, fn)).convert_alpha())
     assets[GULA_DIE] = gula_die_frames
 
+     # GULA COXA DE FRANGO
+    GULA_COXA = 'gula_coxa'
+    coxa_folder = os.path.join(IMG_DIR, "coxa_de_frango")
+    coxa_img = None
+    if os.path.isdir(coxa_folder):
+        
+        for f in os.listdir(coxa_folder):
+            if f.lower().endswith(".png"):
+                coxa_img = pygame.image.load(os.path.join(coxa_folder, f)).convert_alpha()
+                break
+    assets[GULA_COXA] = coxa_img
+
+
 
     #Trilha sonora
 
