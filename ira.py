@@ -2,11 +2,11 @@ import pygame
 import random
 
 BOSS_ATTACK_INTERVAL = 2000   # ms entre ataques (padrão)
-TRACE_COUNT = 7               # quantos traços por ataque
+TRACE_COUNT = 16               # quantos traços por ataque
 TRACE_WARNING_DURATION = 1500  # ms tempo dos traços em alerta
 TRACE_ACTIVE_DURATION = 2000   # ms que cada traço fica ativo
 FURY_MULT = 1.5               # multiplicador quando o boss entra em fúria
-TRACE_WIDTH = 160
+TRACE_WIDTH = 100
 TRACE_HEIGHT = 18
 TRACE_MARGIN_BOTTOM = 10      # distância entre o traço e o "chão" (px)
 ATTACK_ANIM_DELAY = 120       # ms entre frames de animação de ataque
