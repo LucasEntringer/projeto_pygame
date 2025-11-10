@@ -65,7 +65,7 @@ def load_assets():
     assets[IRA_IDLE] = ira_idle
 
     IRA_ATTACK = 'ira_attack'
-    ira_attack_folder = os.path.join(IMG_DIR, "ira_atacando")
+    ira_attack_folder = os.path.join(IMG_DIR, "ira_ataque")
     ira_attack_frames = []
     if os.path.isdir(ira_attack_folder):
         files = [f for f in os.listdir(ira_attack_folder) if f.lower().endswith(".png")]
@@ -75,7 +75,7 @@ def load_assets():
     assets[IRA_ATTACK] = ira_attack_frames
 
     IRA_DIE = 'ira_die'
-    ira_die_folder = os.path.join(IMG_DIR, "ira_morrendo")
+    ira_die_folder = os.path.join(IMG_DIR, "ira_morte")
     ira_die_frames = []
     if os.path.isdir(ira_die_folder):
         files = [f for f in os.listdir(ira_die_folder) if f.lower().endswith(".png")]

@@ -15,6 +15,14 @@ ATTACK_ANIM_DELAY = 120       # ms entre frames de animação de ataque
 
 class BossIra(pygame.sprite.Sprite):
     def __init__(self, x, y, assets, hp=180, damage=18):
+
+        # animação de morte
+        self.die_frames = assets.get('ira_die', [])  # já tem, mas confirma
+        self.is_dying = False
+        self.die_index = 0
+        self.die_timer = 0
+        self.die_delay = 120  # ms por frame da animação de morte
+
         super().__init__()
         # assets: dicionário retornado por load_assets()
         self.idle_img = assets.get('ira_idle')            # imagem única (Surface) ou None
@@ -82,10 +90,20 @@ class BossIra(pygame.sprite.Sprite):
             self.apply_fury()
 
     def take_damage(self, amount):
+        # aplica dano em HP
         self.hp -= amount
-        if self.hp <= 0:
-            self.kill()
-            self.alive_flag = False
+        # se ainda vivo, só reduz e retorna
+        if self.hp > 0:
+            return
+        # se ja zerou a vida, inicia a animação de morte (em vez de matar de imediato)
+        if not self.is_dying:
+            self.is_dying = True
+            self.die_index = 0
+            self.die_timer = 0
+            # bloqueia movimentos/traces
+            self.traces = []
+            # opcional: um som ou efeito aqui
+
 
     def spawn_traces(self, window_width, ground_y, count=TRACE_COUNT):
         """Gera traços com fase de warning (pisca) e em seguida fase ativa (causa dano)."""
@@ -111,6 +129,26 @@ class BossIra(pygame.sprite.Sprite):
         dt: ms
         window_width, ground_y: necessários para spawn_traces (passar LARGURA e ALTURA)
         """
+        # Se está na animação de morrer, toca die_frames e finaliza quando acabar
+        if getattr(self, 'is_dying', False):
+            # anima a morte
+            self.die_timer += dt
+            if self.die_timer >= self.die_delay:
+                self.die_timer -= self.die_delay
+                self.die_index += 1
+                if self.die_index >= len(self.die_frames):
+                    # animação terminou → marcar morto (será removido por jogo)
+                    self.is_dying = False
+                    self.alive_flag = False
+                    # keep last frame visible:
+                    if self.die_frames:
+                        self.image = self.die_frames[-1]
+                    return
+            # aplica frame atual da morte
+            if self.die_index < len(self.die_frames) and self.die_frames:
+                self.image = self.die_frames[self.die_index]
+            return
+
         if not self.alive_flag:
             return
 
