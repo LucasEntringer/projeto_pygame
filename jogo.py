@@ -5,7 +5,7 @@ from assets import load_assets
 from ira import BossIra
 from classes import Dante
 # Importa apenas BossGula (CoxaDeFrango removida)
-from gula import BossGula, COXA_DAMAGE, COXA_HIT_RANGE
+from gula import BossGula, COXA_DAMAGE
 import random
 
 def menu_screen(window, clock, assets):
@@ -234,7 +234,6 @@ def game_screen(window, clock, assets):
         for e in enemies:
             if hasattr(e, 'draw_traces'): 
                 e.draw_traces(window)
-                
         # --- Desenha projéteis (coxas) de cada inimigo ---
         for e in enemies:
             if hasattr(e, 'coxas') and e.coxas:
