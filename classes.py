@@ -148,8 +148,6 @@ class Dante(pygame.sprite.Sprite):
                     self.image = new_image
                     self.rect = self.image.get_rect()
                     self.rect.midbottom = anchor
-                    pygame.quit()
-                    sys.exit()
             # aplica frame atual da morte (se ainda dentro do range)
             if self.frame_index < len(self.die_frames):
                 new_image = self.die_frames[self.frame_index]
@@ -242,7 +240,6 @@ class Dante(pygame.sprite.Sprite):
         self.no_chao = True
         self.is_dying = True
         self.die_played = False
-        self.state = 'dead'
         self.frame_index = 0
         self.frame_timer = 0
 

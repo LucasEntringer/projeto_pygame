@@ -28,6 +28,12 @@ class BossGula(pygame.sprite.Sprite):
         self.walk_frames = assets.get('gula_walk', []) if assets else []
         self.attack_frames = assets.get('gula_attack', []) if assets else []
         self.die_frames = assets.get('gula_die', []) if assets else []
+        # criar caches flipados que o update usa (die_right / die_left)
+        self.die_right = list(self.die_frames)
+        try:
+            self.die_left = [pygame.transform.flip(f, True, False) for f in self.die_right]
+        except Exception:
+            self.die_left = list(self.die_right)
         self.coxa_img = assets.get('gula_coxa') if assets else None
 
         # mantemos frames "originais" e usaremos flip na hora do draw
