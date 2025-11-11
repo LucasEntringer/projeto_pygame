@@ -279,6 +279,12 @@ def game_screen(window, clock, assets):
             pygame.draw.rect(window, (60, 60, 60), bar_rect)
             pygame.draw.rect(window, (200, 40, 40), hp_rect)
             pygame.draw.rect(window, (20, 20, 20), bar_rect, 2)
+            # Mostrar número de vida do boss (HP atual / total)
+            hp_text = f"{boss_for_hud.hp}/{boss_for_hud.base_hp}"
+            hp_font = pygame.font.SysFont(None, 26, bold=True)
+            hp_surf = hp_font.render(hp_text, True, (255, 255, 255))
+            hp_rect = hp_surf.get_rect(center=(x + bar_w // 2, y + 18 + bar_h // 2))
+            window.blit(hp_surf, hp_rect)
 
         # Mostra corações (agora atualiza corretamente)
         hearts = "♥ " * max(0, dante.lives)
