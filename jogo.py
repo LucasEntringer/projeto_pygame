@@ -199,7 +199,8 @@ def game_screen(window, clock, assets):
             gula = None
         
         if dante.lives<=0:
-            running = False
+            if not getattr(dante, 'is_dying', False) and not getattr(dante, 'die_played', False):
+                dante.morrer()
 
             return GAME_OVER_STATE
 
@@ -264,6 +265,9 @@ def game_screen(window, clock, assets):
             window.blit(heart_surf, (10, 10))
 
         pygame.display.flip()
+        
+        if dante.lives <= 0 and getattr(dante, 'die_played', False):
+            return GAME_OVER_STATE
     return MENU_STATE
 
 def game_over_screen(window, clock, assets):
@@ -295,6 +299,7 @@ def game_over_screen(window, clock, assets):
     window.blit(text_inst, text_inst_rect)
 
     pygame.display.flip()
+
 
 def main():
     pygame.init()
