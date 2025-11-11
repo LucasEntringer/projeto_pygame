@@ -168,51 +168,85 @@ def game_screen(window, clock, assets):
             dante.parar()
 
         # --- MOVIMENTO ENTRE SALAS (borda direita / esquerda) ---
-        # quando Dante alcança a borda direita, entra na próxima sala
+        # detecta se há algum boss vivo na sala atual
+        boss_vivo = False
+
+        # checagem para cada boss existente (expande fácil pra futuros)
+        bosses_por_sala = {
+            2: gula,
+            4: getattr(globals(), "luxuria", None),  # placeholder para o futuro boss da sala 4
+            6: ira
+        }
+
+        boss_atual = bosses_por_sala.get(current_room)
+        if boss_atual is not None and getattr(boss_atual, "alive_flag", False):
+            boss_vivo = True
+
+        # --- Borda direita ---
         if dante.rect.right >= LARGURA:
-            if current_room < ROOM_COUNT:
+            if boss_vivo:
+                # boss ainda está vivo — impede sair, mas permite andar pra dentro
+                dante.rect.right = LARGURA - 2
+                if dante.speedx > 0:
+                    dante.parar()
+            elif current_room < ROOM_COUNT:
                 current_room += 1
-                # reposiciona Dante do lado esquerdo da tela
                 dante.rect.left = 10
                 dante.parar()
-                # atualiza bosses para essa sala
                 spawn_bosses_for_room(current_room)
-                # garante que bosses da sala atual estejam no grupo enemies
-                if current_room == 2 and gula is not None and gula not in enemies:
-                    enemies.add(gula)
-                if current_room == 6 and ira is not None and ira not in enemies:
-                    enemies.add(ira)
-                # remove bosses que não pertencem a esta sala
-                if gula is not None and current_room != 2 and gula in enemies:
-                    try: enemies.remove(gula)
-                    except Exception: pass
-                if ira is not None and current_room != 6 and ira in enemies:
-                    try: enemies.remove(ira)
-                    except Exception: pass
-            else:
-                # se já está na última sala, impede sair da tela
-                dante.rect.right = LARGURA
 
-        # quando Dante alcança a borda esquerda, volta para sala anterior
+                # adiciona/remover bosses conforme sala
+                if gula and current_room == 2 and gula not in enemies:
+                    enemies.add(gula)
+                if ira and current_room == 6 and ira not in enemies:
+                    enemies.add(ira)
+                # futuro boss (sala 4)
+                if "luxuria" in globals():
+                    luxuria = globals()["luxuria"]
+                    if luxuria and current_room == 4 and luxuria not in enemies:
+                        enemies.add(luxuria)
+
+                # remove bosses fora da sala
+                for sala, boss in bosses_por_sala.items():
+                    if boss and current_room != sala and boss in enemies:
+                        try: enemies.remove(boss)
+                        except Exception: pass
+            else:
+                dante.rect.right = LARGURA - 2
+                if dante.speedx > 0:
+                    dante.parar()
+
+        # --- Borda esquerda ---
         if dante.rect.left <= 0:
-            if current_room > 1:
+            if boss_vivo:
+                dante.rect.left = 2
+                if dante.speedx < 0:
+                    dante.parar()
+            elif current_room > 1:
                 current_room -= 1
                 dante.rect.right = LARGURA - 10
                 dante.parar()
                 spawn_bosses_for_room(current_room)
-                # adicionar/remover bosses conforme sala
-                if current_room == 2 and gula is not None and gula not in enemies:
+
+                if gula and current_room == 2 and gula not in enemies:
                     enemies.add(gula)
-                if current_room == 6 and ira is not None and ira not in enemies:
+                if ira and current_room == 6 and ira not in enemies:
                     enemies.add(ira)
-                if gula is not None and current_room != 2 and gula in enemies:
-                    try: enemies.remove(gula)
-                    except Exception: pass
-                if ira is not None and current_room != 6 and ira in enemies:
-                    try: enemies.remove(ira)
-                    except Exception: pass
+                # futuro boss (sala 4)
+                if "luxuria" in globals():
+                    luxuria = globals()["luxuria"]
+                    if luxuria and current_room == 4 and luxuria not in enemies:
+                        enemies.add(luxuria)
+
+                # remove bosses fora da sala
+                for sala, boss in bosses_por_sala.items():
+                    if boss and current_room != sala and boss in enemies:
+                        try: enemies.remove(boss)
+                        except Exception: pass
             else:
-                dante.rect.left = 0
+                dante.rect.left = 2
+                if dante.speedx < 0:
+                    dante.parar()
 
         all_sprites.update(dt)
 
