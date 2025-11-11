@@ -35,6 +35,11 @@ def menu_screen(window, clock, assets):
 
     background = assets['menu_back']
 
+    menu_music_path = os.path.join(SND_DIR, 'menu_soundtrack.wav')
+    pygame.mixer.music.load(menu_music_path)
+    pygame.mixer.music.play(loops=-1)
+    pygame.mixer.music.set_volume(0.5)
+
     running_menu = True
     while running_menu:
         clock.tick(FPS)
@@ -93,6 +98,9 @@ def game_screen(window, clock, assets):
     ira = None
 
     running = True
+    pygame.mixer.music.stop()
+    game_music_path = os.path.join(SND_DIR, 'Verdi_s-Requiem_-II.-Dies-Irae-_CUGMZlvrR4c_.ogg') 
+    pygame.mixer.music.load(game_music_path)
     pygame.mixer.music.play(loops=-1)
 
     while running:
