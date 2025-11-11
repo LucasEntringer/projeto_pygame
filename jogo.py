@@ -232,8 +232,18 @@ def game_screen(window, clock, assets):
 
         # --- Desenho de Traços/Coxas ---
         for e in enemies:
-            if hasattr(e, 'draw_traces'):
+            if hasattr(e, 'draw_traces'): 
                 e.draw_traces(window)
+                
+        # --- Desenha projéteis (coxas) de cada inimigo ---
+        for e in enemies:
+            if hasattr(e, 'coxas') and e.coxas:
+                for p in e.coxas:
+                    try:
+                        window.blit(p['image'], p['rect'])
+                    except Exception:
+                        pygame.draw.rect(window, (200,120,40), p['rect'])
+
         # --------------------------------
         # Verifica colisão dos projéteis (coxas) com Dante
         for e in list(enemies):
