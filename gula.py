@@ -3,12 +3,12 @@ import random
 import math
 
 # ===== CONFIGURAÇÕES DOS TIROS (COXAS) =====
-COXA_DAMAGE = 18
-COXA_SPEED = 350  # pixels por segundo (velocidade do tiro)
+COXA_DAMAGE = 10
+COXA_SPEED = 300  # pixels por segundo (velocidade do tiro)
 COXA_WIDTH = 40
 COXA_HEIGHT = 20
 COXA_LIFETIME = 5000  # ms até desaparecer
-COXA_SHOOT_DELAY = 1200  # ms entre cada tiro ← CONTROLE AQUI O DELAY
+COXA_SHOOT_DELAY = 3000  # ms entre cada tiro ← CONTROLE AQUI O DELAY
 
 SPEED_SCALE = 0.90
 ATTACK_ANIM_DELAY = 100
@@ -247,7 +247,7 @@ class BossGula(pygame.sprite.Sprite):
                     self.rect.x -= step
                 self.state = "walk"
                 self.shoot_timer = 0  # Reseta o timer de tiro
-            elif abs(dx) > MELEE_RANGE:
+            else:
                 # Distância ideal: para e atira
                 self.state = "idle"
                 
@@ -256,10 +256,6 @@ class BossGula(pygame.sprite.Sprite):
                 if self.shoot_timer >= COXA_SHOOT_DELAY:
                     self.shoot_timer = 0
                     self.atirar_coxa()
-            else:
-                # Muito perto: para
-                self.state = "idle"
-                self.shoot_timer = 0
         else:
             self.state = "idle"
             self.shoot_timer = 0
