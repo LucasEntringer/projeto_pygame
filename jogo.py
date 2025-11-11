@@ -9,6 +9,16 @@ import random
 
 def menu_screen(window, clock, assets):
     assets = load_assets()
+
+    TAMANHO_NORMAL = 50
+    TAMANHO_HOVER = 55
+
+    font_normal = pygame.font.SysFont("Arial", TAMANHO_NORMAL, bold=True)
+    font_hover = pygame.font.SysFont("Arial", TAMANHO_HOVER, bold=True)
+
+    COLOR_NORMAL = (180, 180, 180)
+    COLOR_HOVER = (255, 255, 255)
+
     #fontes e cores
     font_menu = pygame.font.SysFont("Arial", 50)
     BTN_COLOR = (100, 100, 100)
@@ -22,6 +32,8 @@ def menu_screen(window, clock, assets):
 
     start_btn = pygame.Rect(btn_x, 250, btn_w, btn_h) # Botão "Iniciar"
     exit_btn = pygame.Rect(btn_x, 350, btn_w, btn_h)  # Botão "Sair"
+
+    background = assets['menu_back']
 
     running_menu = True
     while running_menu:
@@ -42,25 +54,23 @@ def menu_screen(window, clock, assets):
                     if exit_btn.collidepoint(mouse_pos):
                         return EXIT_STATE
         
-        window.fill(PRETO)
+        window.blit(background,(0,0))
 
         if start_btn.collidepoint(mouse_pos):
-            pygame.draw.rect(window, BTN_HOVER_COLOR, start_btn, border_radius=10)
+            text_surf = font_hover.render("Iniciar", True, COLOR_HOVER)
         else:
-            pygame.draw.rect(window, BTN_COLOR, start_btn, border_radius=10)
+            text_surf = font_normal.render("Iniciar", True, COLOR_NORMAL)
         
-        # Botão Sair
+        text_rect = text_surf.get_rect(center=start_btn.center)
+        window.blit(text_surf, text_rect)
+        
         if exit_btn.collidepoint(mouse_pos):
-            pygame.draw.rect(window, BTN_HOVER_COLOR, exit_btn, border_radius=10)
+            text_surf = font_hover.render("Sair", True, COLOR_HOVER)
         else:
-            pygame.draw.rect(window, BTN_COLOR, exit_btn, border_radius=10)
-        
-
-        text_start = font_menu.render("Iniciar", True, TEXT_COLOR)
-        window.blit(text_start, text_start.get_rect(center=start_btn.center))
-        
-        text_exit = font_menu.render("Sair", True, TEXT_COLOR)
-        window.blit(text_exit, text_exit.get_rect(center=exit_btn.center))
+            text_surf = font_normal.render("Sair", True, COLOR_NORMAL)
+            
+        text_rect = text_surf.get_rect(center=exit_btn.center)
+        window.blit(text_surf, text_rect)
 
         pygame.display.flip()
 

@@ -2,7 +2,7 @@
 import os
 import re
 import pygame
-from config import IMG_DIR, SND_DIR  # IMG_DIR = "assets/imagens"
+from config import IMG_DIR, SND_DIR, LARGURA, ALTURA  # IMG_DIR = "assets/imagens"
 
 DANTE_WALK = 'dante_walk'
 
@@ -136,6 +136,13 @@ def load_assets():
                 coxa_img = pygame.image.load(os.path.join(coxa_folder, f)).convert_alpha()
                 break
     assets[GULA_COXA] = coxa_img
+
+    #Background menu
+    MENU_BACK = 'menu_back'
+    assets[MENU_BACK] = pygame.image.load(os.path.join(IMG_DIR, "menu_hell.jpg")).convert()
+    assets[MENU_BACK] = pygame.transform.scale(assets[MENU_BACK],(LARGURA,ALTURA))
+
+
 
 
 
