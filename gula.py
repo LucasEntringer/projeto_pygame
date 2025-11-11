@@ -1,22 +1,14 @@
 import pygame
 import random
+import math
 
-BOSS_ATTACK_INTERVAL = 2200
+BOSS_ATTACK_INTERVAL = 1500
 FURY_MULT = 1.4
 ATTACK_ANIM_DELAY = 100
 
-COXA_FALL_MIN_SPEED = 4
-COXA_FALL_MAX_SPEED = 10
-COXA_COUNT_PER_ATTACK = 6
-COXA_SPREAD_PADDING = 60
-COXA_WIDTH = 28
-COXA_HEIGHT = 22
 COXA_DAMAGE = 18
-GRAVITY = 0.35
-COXA_ROT_MIN = -8
-COXA_ROT_MAX = 8
+COXA_HIT_RANGE = 100 
 
-# escala de velocidade (1.0 = velocidade base passada no construtor)
 SPEED_SCALE = 0.90
 
 
@@ -28,17 +20,28 @@ class BossGula(pygame.sprite.Sprite):
         self.walk_frames = assets.get('gula_walk', []) if assets else []
         self.attack_frames = assets.get('gula_attack', []) if assets else []
         self.die_frames = assets.get('gula_die', []) if assets else []
-        # criar caches flipados que o update usa (die_right / die_left)
         self.die_right = list(self.die_frames)
         try:
             self.die_left = [pygame.transform.flip(f, True, False) for f in self.die_right]
         except Exception:
             self.die_left = list(self.die_right)
         self.coxa_img = assets.get('gula_coxa') if assets else None
+        
+        if not self.coxa_img:
+            temp_w = 50
+            temp_h = 20
+            self.coxa_img = pygame.Surface((temp_w, temp_h), pygame.SRCALPHA)
+            pygame.draw.ellipse(self.coxa_img, (230, 120, 20), (0, 0, temp_w, temp_h))
+        
+        self.coxa_weapon = pygame.transform.scale(self.coxa_img, (40, 20))
 
-        # mantemos frames "originais" e usaremos flip na hora do draw
-        self.facing = -1  # -1 = esquerda, 1 = direita (conceito lógico)
+
+        self.facing = -1
+        
         self.image = self.idle_frames[0] if self.idle_frames else pygame.Surface((180, 180), pygame.SRCALPHA)
+        if not self.idle_frames and not self.walk_frames:
+            self.image.fill((0, 150, 0))
+            
         self.rect = self.image.get_rect(midbottom=(x, y))
 
         self.hp = int(hp)
@@ -63,12 +66,14 @@ class BossGula(pygame.sprite.Sprite):
         self.attack_anim_timer = 0
         self.attack_anim_delay = ATTACK_ANIM_DELAY
 
+        self.damage_dealt = False 
+
         self.is_dying = False
         self.die_index = 0
         self.die_timer = 0
         self.die_delay = 120
 
-        self.coxas = []
+        self.coxas = [] 
         self.fury = False
         self.player_attacked_first = None
 
@@ -103,76 +108,31 @@ class BossGula(pygame.sprite.Sprite):
             self.die_timer = 0
             self.coxas = []
 
-    def gerar_coxas(self, window_width, ground_y, count=COXA_COUNT_PER_ATTACK):
-        self.coxas = []
-        now = pygame.time.get_ticks()
-        ww = max(200, window_width or 800)
-        for i in range(count):
-            x = random.randint(COXA_SPREAD_PADDING, max(COXA_SPREAD_PADDING, ww - COXA_SPREAD_PADDING - COXA_WIDTH))
-            y = - random.randint(20, 200)
-            rect = pygame.Rect(x, y, COXA_WIDTH, COXA_HEIGHT)
-            vel_y = random.uniform(COXA_FALL_MIN_SPEED, COXA_FALL_MAX_SPEED)
-            img = self.coxa_img
-            if isinstance(img, pygame.Surface):
-                try:
-                    img_s = pygame.transform.scale(img, (COXA_WIDTH, COXA_HEIGHT))
-                except Exception:
-                    img_s = img
-            else:
-                s = pygame.Surface((COXA_WIDTH, COXA_HEIGHT), pygame.SRCALPHA)
-                pygame.draw.ellipse(s, (230, 120, 20), (0, 0, COXA_WIDTH, COXA_HEIGHT))
-                img_s = s
-            self.coxas.append({
-                'rect': rect,
-                'vel_y': vel_y,
-                'img_orig': img_s,
-                'angle': random.uniform(0, 360),
-                'rot_speed': random.uniform(COXA_ROT_MIN, COXA_ROT_MAX),
-                'dano': COXA_DAMAGE,
-                'spawned_at': now,
-            })
-        # marca ciclo de ataque (para animação)
+    def gerar_coxas(self): 
         self.atacando = True
         self.attack_anim_idx = 0
         self.attack_anim_timer = 0
-
-    def atualizar_coxas(self, dt):
-        if not self.coxas:
-            return
-        to_remove = []
-        for c in self.coxas:
-            c['vel_y'] += GRAVITY
-            c['rect'].y += max(1, int(c['vel_y'] * (dt / (1000.0 / 60.0))))
-            c['angle'] = (c['angle'] + c['rot_speed'] * (dt / (1000.0 / 60.0))) % 360
-            if c['rect'].top > 900:
-                to_remove.append(c)
-        for r in to_remove:
-            try:
-                self.coxas.remove(r)
-            except ValueError:
-                pass
+        self.damage_dealt = False
+        return []
 
     def draw_traces(self, surface):
-        for c in self.coxas:
-            orig = c.get('img_orig')
-            angle = c.get('angle', 0)
-            rect = c.get('rect')
-            try:
-                rotated = pygame.transform.rotate(orig, angle)
-                rotated_rect = rotated.get_rect(center=rect.center)
-                surface.blit(rotated, rotated_rect.topleft)
-                c['render_rect'] = rotated_rect
-            except Exception:
-                try:
-                    surface.blit(orig, rect)
-                    c['render_rect'] = rect
-                except Exception:
-                    pass
+        if self.atacando and self.coxa_weapon:
+            if self.facing == 1:
+                coxa_x = self.rect.centerx + 50
+                coxa_y = self.rect.centery - 20
+                weapon_img = self.coxa_weapon
+            else:
+                coxa_x = self.rect.centerx - 50 - self.coxa_weapon.get_width()
+                coxa_y = self.rect.centery - 20
+                weapon_img = pygame.transform.flip(self.coxa_weapon, True, False)
+            
+            surface.blit(weapon_img, (coxa_x, coxa_y))
+
 
     def _select_frame_and_apply_flip(self, base_frames, dt):
-        """Escolhe frame de base_frames (não flipadas) e aplica flip horizontal de acordo com self.facing."""
         if not base_frames:
             return None
+            
         self.frame_timer += dt
         if self.frame_timer >= self.frame_delay:
             self.frame_timer -= self.frame_delay
@@ -187,6 +147,7 @@ class BossGula(pygame.sprite.Sprite):
             return frame
 
     def update(self, dt, window_width=None, ground_y=None, player=None):
+        
         if getattr(self, 'is_dying', False):
             self.die_timer += dt
             if self.die_timer >= self.die_delay:
@@ -201,42 +162,67 @@ class BossGula(pygame.sprite.Sprite):
                         self.image = last
                         self.rect = self.image.get_rect()
                         self.rect.midbottom = anchor
-                    return
+                    return []
             if self.die_index < len(self.die_right):
                 frame = self.die_right[self.die_index] if self.facing == 1 else self.die_left[self.die_index]
                 anchor = self.rect.midbottom
                 self.image = frame
                 self.rect = self.image.get_rect()
                 self.rect.midbottom = anchor
-            return
+            return []
 
         if not self.alive_flag:
-            return
+            return []
 
-        # movimento: persegue o player se informado
         if player is not None and getattr(player, "rect", None) is not None:
             dx = player.rect.centerx - self.rect.centerx
             step = max(1, int(self.speed * SPEED_SCALE * (dt / (1000.0 / 60.0))))
-            if dx > 8:
-                self.rect.x += step
-                self.facing = 1
+            
+            MELEE_RANGE = 100
+            
+            if abs(dx) > MELEE_RANGE: 
+                if dx > 0:
+                    self.rect.x += step
+                    self.facing = 1
+                else:
+                    self.rect.x -= step
+                    self.facing = -1
                 self.state = "walk"
-            elif dx < -8:
-                self.rect.x -= step
-                self.facing = -1
-                self.state = "walk"
-            else:
+            else: 
                 self.state = "idle"
+                self.facing = 1 if dx > 0 else -1 
+                
+                if not self.atacando:
+                    self.attack_timer += dt
+                    if self.attack_timer >= self.attack_interval:
+                        self.attack_timer = 0
+                        self.gerar_coxas()
+                else:
+                    self.attack_timer = self.attack_interval 
+
+            if self.atacando and not self.damage_dealt and self.attack_anim_idx >= 2:
+                if self.facing == 1:
+                    attack_rect = pygame.Rect(self.rect.right, self.rect.top + 30, COXA_HIT_RANGE, self.rect.height - 60)
+                else:
+                    attack_rect = pygame.Rect(self.rect.left - COXA_HIT_RANGE, self.rect.top + 30, COXA_HIT_RANGE, self.rect.height - 60)
+
+                if player.rect.colliderect(attack_rect):
+                    player.dano(amount=COXA_DAMAGE)
+                    self.damage_dealt = True
         else:
             self.state = "idle"
+            self.attack_timer = 0
 
-        # escolha das frames base (sempre usar frames não-flipadas)
-        if self.state == "walk":
+        new_state = self.state
+        if new_state == "walk":
             base = self.walk_frames if self.walk_frames else self.idle_frames
         else:
             base = self.idle_frames if self.idle_frames else self.walk_frames
 
-        # aplica frame + flip
+        if base and self.frame_idx >= len(base):
+             self.frame_idx = 0
+             self.frame_timer = 0
+             
         frame_to_draw = self._select_frame_and_apply_flip(base, dt)
         if frame_to_draw is not None:
             anchor = self.rect.midbottom
@@ -244,20 +230,6 @@ class BossGula(pygame.sprite.Sprite):
             self.rect = self.image.get_rect()
             self.rect.midbottom = anchor
 
-        # ataque: só processa timer/geração quando player for passado
-        if player is not None and getattr(player, "rect", None) is not None:
-            distancia = abs(player.rect.centerx - self.rect.centerx)
-            player_perto = distancia < 200
-            if player_perto:
-                self.attack_timer += dt
-                if self.attack_timer >= self.attack_interval:
-                    self.attack_timer = 0
-                    if window_width is not None and ground_y is not None:
-                        self.gerar_coxas(window_width, ground_y)
-            else:
-                self.attack_timer = 0
-
-        # animação de ataque (se iniciou)
         frames_attack = self.attack_frames if self.attack_frames else None
         if self.atacando and frames_attack:
             if self.attack_anim_idx < len(frames_attack):
@@ -267,7 +239,6 @@ class BossGula(pygame.sprite.Sprite):
                     self.attack_anim_idx += 1
                 if self.attack_anim_idx < len(frames_attack):
                     anchor = self.rect.midbottom
-                    # aplica flip conforme facing
                     try:
                         attack_frame = frames_attack[self.attack_anim_idx]
                         if self.facing == -1:
@@ -281,13 +252,8 @@ class BossGula(pygame.sprite.Sprite):
                 self.atacando = False
                 self.attack_anim_idx = 0
                 self.attack_anim_timer = 0
-
-        self.atualizar_coxas(dt)
-
-
-
-
-
-
+                self.damage_dealt = False
+        
+        return []
 
 
