@@ -101,29 +101,36 @@ def game_screen(window, clock, assets):
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False
-                if event.key == pygame.K_SPACE:
-                    dante.pular()
-                if event.key == pygame.K_z:
-                    assets['atk_sound'].play()
-                    dante.attack(enemies)
-                    for e in enemies:
-                        if hasattr(e, 'notify_player_attack'):
-                            try:
-                                e.notify_player_attack()
-                            except Exception:
-                                pass
+                # Bloqueia controles se estiver morrendo
+                if not getattr(dante, 'is_dying', False):
+                    if event.key == pygame.K_SPACE:
+                        dante.pular()
+                    if event.key == pygame.K_z:
+                        assets['atk_sound'].play()
+                        dante.attack(enemies)
+                        for e in enemies:
+                            if hasattr(e, 'notify_player_attack'):
+                                try:
+                                    e.notify_player_attack()
+                                except Exception:
+                                    pass
 
-        keys = pygame.key.get_pressed()
-        left = keys[pygame.K_a] or keys[pygame.K_LEFT]
-        right = keys[pygame.K_d] or keys[pygame.K_RIGHT]
+        # Bloqueia movimentação se estiver morrendo
+        if not getattr(dante, 'is_dying', False):
+            keys = pygame.key.get_pressed()
+            left = keys[pygame.K_a] or keys[pygame.K_LEFT]
+            right = keys[pygame.K_d] or keys[pygame.K_RIGHT]
 
-        if left and right:
-            dante.parar()
-        elif left:
-            dante.mover_esquerda()
-        elif right:
-            dante.mover_direita()
+            if left and right:
+                dante.parar()
+            elif left:
+                dante.mover_esquerda()
+            elif right:
+                dante.mover_direita()
+            else:
+                dante.parar()
         else:
+            # Garante que pare de se mover durante a morte
             dante.parar()
 
         if ira is None and dante.rect.centerx >= LARGURA - 120:
@@ -191,18 +198,17 @@ def game_screen(window, clock, assets):
                 gula.kill()
             except Exception:
                 pass
-            # remove referência local; também remove do grupo enemies
             try:
                 enemies.remove(gula)
             except Exception:
                 pass
             gula = None
         
-        if dante.lives<=0:
+        # CORREÇÃO: Inicia a animação de morte, mas NÃO retorna ainda
+        if dante.lives <= 0:
             if not getattr(dante, 'is_dying', False) and not getattr(dante, 'die_played', False):
                 dante.morrer()
-
-            return GAME_OVER_STATE
+                assets['hurt_sound'].play()  # Toca som de morte (opcional)
 
         if bg:
             window.blit(bg, (0, 0))
@@ -259,6 +265,7 @@ def game_screen(window, clock, assets):
             pygame.draw.rect(window, (200, 40, 40), hp_rect)
             pygame.draw.rect(window, (20, 20, 20), bar_rect, 2)
 
+        # Mostra corações (agora atualiza corretamente)
         hearts = "♥ " * max(0, dante.lives)
         if hearts:
             heart_surf = font.render(hearts, True, HEART_COLOR)
@@ -266,8 +273,10 @@ def game_screen(window, clock, assets):
 
         pygame.display.flip()
 
+        # SÓ VAI PARA GAME OVER quando a animação de morte terminar
         if dante.lives <= 0 and getattr(dante, 'die_played', False):
             return GAME_OVER_STATE
+            
     return MENU_STATE
 
 def game_over_screen(window, clock, assets):
@@ -282,23 +291,23 @@ def game_over_screen(window, clock, assets):
         clock.tick(FPS)
 
         for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    return EXIT_STATE
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        return MENU_STATE
+            if event.type == pygame.QUIT:
+                return EXIT_STATE
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return MENU_STATE
     
-    window.fill(PRETO)
+        window.fill(PRETO)
 
-    text_go = font_titulo.render("GAME OVER", True, VERMELHO)
-    text_go_rect = text_go.get_rect(center=(LARGURA // 2, ALTURA // 2 - 50))
-    window.blit(text_go, text_go_rect)
+        text_go = font_titulo.render("GAME OVER", True, VERMELHO)
+        text_go_rect = text_go.get_rect(center=(LARGURA // 2, ALTURA // 2 - 50))
+        window.blit(text_go, text_go_rect)
 
-    text_inst = font_instrucao.render("Pressione ESC para voltar ao Menu", True, BRANCO)
-    text_inst_rect = text_inst.get_rect(center=(LARGURA // 2, ALTURA // 2 + 50))
-    window.blit(text_inst, text_inst_rect)
+        text_inst = font_instrucao.render("Pressione ESC para voltar ao Menu", True, BRANCO)
+        text_inst_rect = text_inst.get_rect(center=(LARGURA // 2, ALTURA // 2 + 50))
+        window.blit(text_inst, text_inst_rect)
 
-    pygame.display.flip()
+        pygame.display.flip()
 
 
 def main():
@@ -331,4 +340,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
