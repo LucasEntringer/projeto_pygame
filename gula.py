@@ -113,8 +113,37 @@ class BossGula(pygame.sprite.Sprite):
         self.attack_anim_idx = 0
         self.attack_anim_timer = 0
         self.damage_dealt = False
-        return []
+        
+        #spaw do projétil:
+        try:
+            img = self.coxa_weapon
+            if self.facing == -1:
+                img = pygame.transform.flip(img, True, False)
+            w, h = img.get_size()
 
+            # posição inicial ligeiramente na frente do boss
+            if self.facing == 1:
+                sx = self.rect.right + 8
+            else:
+                sx = self.rect.left - w - 8
+            sy = self.rect.centery - h // 2
+
+            rect = pygame.Rect(sx, sy, w, h)
+
+            # velocidade em pixels por segundo (ajuste se quiser)
+            speed_px_s = 600  # rápido; diminua para tiro mais lento
+            vel = speed_px_s * (1 if self.facing == 1 else -1)
+
+            # lifetime em ms para limpar projétil que não bateu
+            lifetime = 4000
+
+            proj = {'rect': rect, 'vel': vel, 'image': img, 'lifetime': lifetime}
+            self.coxas.append(proj)
+        except Exception:
+            # fallback: nada acontece se image inválida
+            pass
+
+        return []
     def draw_traces(self, surface):
         if self.atacando and self.coxa_weapon:
             if self.facing == 1:
@@ -253,7 +282,26 @@ class BossGula(pygame.sprite.Sprite):
                 self.attack_anim_idx = 0
                 self.attack_anim_timer = 0
                 self.damage_dealt = False
-        
+        # --- atualização dos projéteis (coxas) ---
+        if self.coxas:
+            to_remove = []
+            for p in self.coxas:
+                # mover: dx = vel * dt/1000
+                dx = int(p['vel'] * (dt / 1000.0))
+                p['rect'].x += dx
+                p['lifetime'] -= dt
+
+                # remover se saiu da tela (uso window_width se fornecido)
+                off_left = p['rect'].right < 0
+                off_right = window_width is not None and p['rect'].left > window_width
+                if p['lifetime'] <= 0 or off_left or off_right:
+                    to_remove.append(p)
+
+            for p in to_remove:
+                try:
+                    self.coxas.remove(p)
+                except ValueError:
+                    pass
         return []
 
 

@@ -5,7 +5,7 @@ from assets import load_assets
 from ira import BossIra
 from classes import Dante
 # Importa apenas BossGula (CoxaDeFrango removida)
-from gula import BossGula
+from gula import BossGula, COXA_DAMAGE, COXA_HIT_RANGE
 import random
 
 def menu_screen(window, clock, assets):
@@ -235,6 +235,18 @@ def game_screen(window, clock, assets):
             if hasattr(e, 'draw_traces'):
                 e.draw_traces(window)
         # --------------------------------
+        # Verifica colisão dos projéteis (coxas) com Dante
+        for e in list(enemies):
+            if hasattr(e, 'coxas') and getattr(e, 'coxas', None):
+                for p in list(e.coxas):
+                    if dante.rect.colliderect(p['rect']):
+                        # aplica dano e remove projétil
+                        damage_amount = getattr(e, 'damage', COXA_DAMAGE)
+                        dante.dano(amount=damage_amount)
+                        try:
+                            e.coxas.remove(p)
+                        except ValueError:
+                            pass
 
         all_sprites.draw(window)
 
