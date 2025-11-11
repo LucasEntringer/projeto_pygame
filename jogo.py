@@ -265,7 +265,7 @@ def game_screen(window, clock, assets):
             window.blit(heart_surf, (10, 10))
 
         pygame.display.flip()
-        
+
         if dante.lives <= 0 and getattr(dante, 'die_played', False):
             return GAME_OVER_STATE
     return MENU_STATE
@@ -281,12 +281,12 @@ def game_over_screen(window, clock, assets):
     while running_game_over:
         clock.tick(FPS)
 
-    for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return EXIT_STATE
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    return MENU_STATE
+        for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    return EXIT_STATE
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        return MENU_STATE
     
     window.fill(PRETO)
 
@@ -325,7 +325,7 @@ def main():
             current_state = game_screen(window, clock, assets)
         
         elif current_state == GAME_OVER_STATE:
-            current_state == game_over_screen(window, clock, assets)
+            current_state = game_over_screen(window, clock, assets)
 
     pygame.quit()
 
