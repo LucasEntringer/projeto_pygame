@@ -90,12 +90,31 @@ def game_screen(window, clock, assets):
 
     dante = Dante(groups=[all_sprites], assets=assets)
 
-    bx = LARGURA // 2 + 100
-    by = ALTURA - 10
-    gula = BossGula(bx, by, assets=assets, patrol_min_x=120, patrol_max_x=LARGURA - 120, speed=2.0)
-    enemies.add(gula)
+    # SISTEMA DE SALAS
+    ROOM_COUNT = 6
+    current_room = 1
 
+    # Nós guardamos referências aos bosses, mas só os adicionamos ao Group quando
+    # estiverem na sala correta.
+    gula = None
     ira = None
+
+    def spawn_bosses_for_room(room):
+        nonlocal gula, ira
+        # Remove bosses que estão no grupo se não pertencerem à sala atual
+        # (a remoção do Group é feita no loop principal abaixo)
+        # Cria instâncias apenas se necessário (lazy)
+        if room == 2 and gula is None:
+            bx = LARGURA // 2 + 100
+            by = ALTURA - 10
+            gula = BossGula(bx, by, assets=assets, patrol_min_x=120, patrol_max_x=LARGURA - 120, speed=2.0)
+        if room == 6 and ira is None:
+            bx = LARGURA // 2 + 100
+            by = ALTURA - 10
+            ira = BossIra(bx, by, assets=assets)
+
+    # certifica-se de criar possíveis bosses da sala inicial (se for sala 1 não faz nada)
+    spawn_bosses_for_room(current_room)
 
     running = True
     pygame.mixer.music.play(loops=-1)
@@ -148,13 +167,52 @@ def game_screen(window, clock, assets):
             # Garante que pare de se mover durante a morte
             dante.parar()
 
-        if ira is None and dante.rect.centerx >= LARGURA - 120:
-            dante.rect.midbottom = (140, ALTURA - 10)
-            dante.parar()
-            bx = LARGURA // 2 + 100
-            by = ALTURA - 10
-            ira = BossIra(bx, by, assets=assets)
-            enemies.add(ira)
+        # --- MOVIMENTO ENTRE SALAS (borda direita / esquerda) ---
+        # quando Dante alcança a borda direita, entra na próxima sala
+        if dante.rect.right >= LARGURA:
+            if current_room < ROOM_COUNT:
+                current_room += 1
+                # reposiciona Dante do lado esquerdo da tela
+                dante.rect.left = 10
+                dante.parar()
+                # atualiza bosses para essa sala
+                spawn_bosses_for_room(current_room)
+                # garante que bosses da sala atual estejam no grupo enemies
+                if current_room == 2 and gula is not None and gula not in enemies:
+                    enemies.add(gula)
+                if current_room == 6 and ira is not None and ira not in enemies:
+                    enemies.add(ira)
+                # remove bosses que não pertencem a esta sala
+                if gula is not None and current_room != 2 and gula in enemies:
+                    try: enemies.remove(gula)
+                    except Exception: pass
+                if ira is not None and current_room != 6 and ira in enemies:
+                    try: enemies.remove(ira)
+                    except Exception: pass
+            else:
+                # se já está na última sala, impede sair da tela
+                dante.rect.right = LARGURA
+
+        # quando Dante alcança a borda esquerda, volta para sala anterior
+        if dante.rect.left <= 0:
+            if current_room > 1:
+                current_room -= 1
+                dante.rect.right = LARGURA - 10
+                dante.parar()
+                spawn_bosses_for_room(current_room)
+                # adicionar/remover bosses conforme sala
+                if current_room == 2 and gula is not None and gula not in enemies:
+                    enemies.add(gula)
+                if current_room == 6 and ira is not None and ira not in enemies:
+                    enemies.add(ira)
+                if gula is not None and current_room != 2 and gula in enemies:
+                    try: enemies.remove(gula)
+                    except Exception: pass
+                if ira is not None and current_room != 6 and ira in enemies:
+                    try: enemies.remove(ira)
+                    except Exception: pass
+            else:
+                dante.rect.left = 0
 
         all_sprites.update(dt)
 
