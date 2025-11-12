@@ -1,6 +1,6 @@
 import pygame
 import os
-from config import LARGURA, ALTURA, FPS, IMG_DIR, SND_DIR, MENU_STATE, GAME_STATE, EXIT_STATE, GAME_OVER_STATE
+from config import LARGURA, ALTURA, FPS, IMG_DIR, SND_DIR, MENU_STATE, GAME_STATE, EXIT_STATE, GAME_OVER_STATE, VICTORY_STATE
 from assets import load_assets
 from ira import BossIra
 from classes import Dante
@@ -149,6 +149,17 @@ def game_screen(window, clock, assets):
     bg_cache[4] = _load_bg_file('Cenário_ganancia.png')
     bg_cache[5] = _load_bg_file('Cenário_inferno.png')
     bg_cache[6] = _load_bg_file('Cenário_ira.png')
+
+    # tenta carregar imagem de vitória (fundo)
+    victory_bg_path = os.path.join(IMG_DIR, 'victory_bg.png')
+    victory_bg = None
+    if os.path.isfile(victory_bg_path):
+        try:
+            vb = pygame.image.load(victory_bg_path)
+            vb = vb.convert_alpha() if vb.get_alpha() else vb.convert()
+            victory_bg = pygame.transform.scale(vb, (LARGURA, ALTURA))
+        except Exception:
+            victory_bg = None
 
     # --- ALTURA FIXA DA PLATAFORMA (ajuste conforme a arte do fundo) ---
     # experimente valores como ALTURA - 60, ALTURA - 72, ALTURA - 90 até ficar perfeito
@@ -341,6 +352,8 @@ def game_screen(window, clock, assets):
             except Exception:
                 pass
             ira = None
+            # quando derrota a Ira, mostrar tela de vitória
+            return VICTORY_STATE
 
         if gula is not None and not gula.alive_flag:
             try:
@@ -477,6 +490,61 @@ def game_over_screen(window, clock, assets):
         pygame.display.flip()
 
 
+def victory_screen(window, clock, assets):
+    font_titulo = pygame.font.SysFont("Arial", 70, bold=True)
+    font_instrucao = pygame.font.SysFont("Arial", 30)
+    VERDE = (0, 200, 0)
+    BRANCO = (255, 255, 255)
+    PRETO = (0, 0, 0)
+
+    # tenta tocar música de vitória se existir
+    victory_music_path = os.path.join(SND_DIR, 'victory_theme.wav')
+    if os.path.isfile(victory_music_path):
+        try:
+            pygame.mixer.music.load(victory_music_path)
+            pygame.mixer.music.play(loops=-1)
+            pygame.mixer.music.set_volume(0.5)
+        except Exception:
+            pass
+
+    # tenta usar a imagem de fundo de vitória (se carregada anteriormente nos assets)
+    victory_bg_path = os.path.join(IMG_DIR, 'victory_bg.png')
+    victory_bg_img = None
+    if os.path.isfile(victory_bg_path):
+        try:
+            img = pygame.image.load(victory_bg_path)
+            img = img.convert_alpha() if img.get_alpha() else img.convert()
+            victory_bg_img = pygame.transform.scale(img, (LARGURA, ALTURA))
+        except Exception:
+            victory_bg_img = None
+
+    running_victory = True
+    while running_victory:
+        clock.tick(FPS)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return EXIT_STATE
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return MENU_STATE
+
+        if victory_bg_img:
+            window.blit(victory_bg_img, (0, 0))
+        else:
+            window.fill(PRETO)
+
+        text_victory = font_titulo.render("VOCÊ VENCEU!", True, VERDE)
+        text_victory_rect = text_victory.get_rect(center=(LARGURA // 2, ALTURA // 2 - 50))
+        window.blit(text_victory, text_victory_rect)
+
+        text_inst = font_instrucao.render("Pressione ESC para voltar ao Menu", True, BRANCO)
+        text_inst_rect = text_inst.get_rect(center=(LARGURA // 2, ALTURA // 2 + 50))
+        window.blit(text_inst, text_inst_rect)
+
+        pygame.display.flip()
+
+
 def main():
     pygame.init()
     pygame.mixer.init()
@@ -503,7 +571,11 @@ def main():
         elif current_state == GAME_OVER_STATE:
             current_state = game_over_screen(window, clock, assets)
 
+        elif current_state == VICTORY_STATE:
+            current_state = victory_screen(window, clock, assets)
+
     pygame.quit()
 
 if __name__ == "__main__":
     main()
+
