@@ -8,3 +8,6 @@ para inicia o jogo é necessario ir no arquivo jogo.py
 
 OBS: é necessario a instalação da biblioteca PYGAME
 
+Foram utilizadas IAs generativas para auxiliar na criação dos códigos das classes, por meio de prompts que definiam as variáveis e elementos mais importantes do desenvolvimento.
+
+
