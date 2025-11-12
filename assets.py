@@ -197,6 +197,12 @@ def load_assets():
     assets[GAME_OVER_BACK] = pygame.image.load(os.path.join(IMG_DIR, "game_over_back.jpg")).convert()
     assets[GAME_OVER_BACK] = pygame.transform.scale(assets[GAME_OVER_BACK], (LARGURA,ALTURA))
 
+    #ICONE
+
+    ICON= 'icon'
+    assets[ICON]= pygame.image.load(os.path.join(IMG_DIR, 'Gemini_Generated_Image_8p5c2s8p5c2s8p5c.png')).convert_alpha()
+    assets['game_icon'] = pygame.transform.scale(assets[ICON],(32,32))
+
 
     #Sons
 
