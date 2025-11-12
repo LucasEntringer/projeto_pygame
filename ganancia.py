@@ -20,7 +20,7 @@ class BossGanancia(pygame.sprite.Sprite):
         self.base_hp = 300
         self.hp = self.base_hp
         self.alive_flag = True
-        self.damage = 30
+        self.damage = 10
 
         self.idle_frames = assets.get('ganancia_idle', [])
         self.attack_frames = assets.get('ganancia_attack', [])
@@ -31,9 +31,9 @@ class BossGanancia(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(midbottom=(x, y))
 
         self.projectiles = []
-        self.shoot_delay = 1500  # ms entre disparos
+        self.shoot_delay = 2000  # ms entre disparos
         self.shoot_timer = 0
-        self.projectile_speed = 5
+        self.projectile_speed = 4
         self.projectile_img = pygame.Surface((16, 16), pygame.SRCALPHA)
         pygame.draw.circle(self.projectile_img, (255, 215, 0), (8, 8), 8)  # moeda dourada simples
 
@@ -148,11 +148,12 @@ class BossGanancia(pygame.sprite.Sprite):
                 self.projectiles.append({'rect': rect, 'vx': vx, 'vy': vy, 'life': 4000})
 
 
-        # 3. Colisão com Dante
+
+        # 3. Colisão com Dante - SEM dano por contato (apenas projéteis do boss podem ferir o jogador)
         if 'player' in kwargs and self.alive_flag and not self.is_dying:
             dante = kwargs['player']
-            if self.rect.colliderect(dante.rect) and not getattr(dante, 'is_hurt', False):
-                dante.dano(amount=self.damage)
+            pass
+
         
         # Atualiza projéteis
         for p in list(self.projectiles):
@@ -167,7 +168,7 @@ class BossGanancia(pygame.sprite.Sprite):
                     self.projectiles.remove(p)
                 except ValueError:
                     pass
-                
+
     def draw_traces(self, surface):
         for p in self.projectiles:
             surface.blit(self.projectile_img, p['rect'])

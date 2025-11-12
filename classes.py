@@ -286,7 +286,11 @@ class Dante(pygame.sprite.Sprite):
 
         # aplica dano a inimigos próximos (usa method take_damage se existir)
         for e in enemies_group:
-            if abs(e.rect.centerx - self.rect.centerx) <= self.attack_range:
+            # usa distância euclidiana 2D para considerar bosses voadores
+            dx = e.rect.centerx - self.rect.centerx
+            dy = e.rect.centery - self.rect.centery
+            dist = (dx*dx + dy*dy) ** 0.5
+            if dist <= self.attack_range:
                 if hasattr(e, 'take_damage'):
                     e.take_damage(self.attack_damage)
                 else:
