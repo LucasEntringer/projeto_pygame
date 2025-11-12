@@ -147,7 +147,11 @@ def load_assets():
 
 
 
-    #sons
+    #Trilha sonora e sons
+
+    pygame.mixer.music.load(os.path.join(SND_DIR, 'Verdi_s-Requiem_-II.-Dies-Irae-_CUGMZlvrR4c_.ogg'))
+
+    pygame.mixer.music.set_volume(0.5)
 
     ATK_SOUND='atk_sound'
     assets[ATK_SOUND]=pygame.mixer.Sound(os.path.join(SND_DIR,'sword-slash-and-swing-185432.wav'))
