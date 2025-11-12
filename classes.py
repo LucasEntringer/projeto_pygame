@@ -114,8 +114,8 @@ class Dante(pygame.sprite.Sprite):
             self.speedy += GRAVIDADE
 
         # chão/teto
-        if self.rect.bottom >= ALTURA - 10:
-            self.rect.bottom = ALTURA - 10
+        if self.rect.bottom >= ALTURA - 110:
+            self.rect.bottom = ALTURA - 110
             self.speedy = 0
             self.no_chao = True
             #reseta o máximo de pulos quando no chão

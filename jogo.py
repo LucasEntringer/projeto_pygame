@@ -108,16 +108,16 @@ def game_screen(window, clock, assets):
         # Cria instâncias apenas se necessário (lazy)
         if room == 2 and gula is None:
             bx = LARGURA // 2 + 100
-            by = ALTURA - 10
+            by = PLATFORM_Y
             gula = BossGula(bx, by, assets=assets, patrol_min_x=120, patrol_max_x=LARGURA - 120, speed=2.0)
         if room == 4 and luxuria is None:
             bx = LARGURA // 2
-            by = ALTURA // 3
+            by = PLATFORM_Y
             # adapte os argumentos de BossGanancia conforme quiser (x,y,assets,groups...)
             luxuria = BossGanancia(bx, by, assets=assets)
         if room == 6 and ira is None:
             bx = LARGURA // 2 + 100
-            by = ALTURA - 10
+            by = PLATFORM_Y
             ira = BossIra(bx, by, assets=assets)
 
     # certifica-se de criar possíveis bosses da sala inicial (se for sala 1 não faz nada)
@@ -149,6 +149,13 @@ def game_screen(window, clock, assets):
     bg_cache[4] = _load_bg_file('Cenário_ganancia.png')
     bg_cache[5] = _load_bg_file('Cenário_inferno.png')
     bg_cache[6] = _load_bg_file('Cenário_ira.png')
+
+    # --- ALTURA FIXA DA PLATAFORMA (ajuste conforme a arte do fundo) ---
+    # experimente valores como ALTURA - 60, ALTURA - 72, ALTURA - 90 até ficar perfeito
+    PLATFORM_Y = ALTURA - 110
+
+    # posicionamento inicial do jogador exatamente sobre a plataforma
+    dante.rect.midbottom = (LARGURA // 2, PLATFORM_Y)
 
     while running:
         dt = clock.tick(FPS)
@@ -220,6 +227,8 @@ def game_screen(window, clock, assets):
             elif current_room < ROOM_COUNT:
                 current_room += 1
                 dante.rect.left = 10
+                # garante y alinhado com a plataforma
+                dante.rect.midbottom = (dante.rect.centerx, PLATFORM_Y)
                 dante.parar()
                 spawn_bosses_for_room(current_room)
 
@@ -250,6 +259,8 @@ def game_screen(window, clock, assets):
             elif current_room > 1:
                 current_room -= 1
                 dante.rect.right = LARGURA - 10
+                # garante y alinhado com a plataforma
+                dante.rect.midbottom = (dante.rect.centerx, PLATFORM_Y)
                 dante.parar()
                 spawn_bosses_for_room(current_room)
 
@@ -278,10 +289,11 @@ def game_screen(window, clock, assets):
         now = pygame.time.get_ticks()
         for e in list(enemies):
             try:
-                e.update(dt, window_width=LARGURA, ground_y=ALTURA, player=dante)
+                # passa ground_y = PLATFORM_Y para consistência com a linha da plataforma
+                e.update(dt, window_width=LARGURA, ground_y=PLATFORM_Y, player=dante)
             except TypeError:
                 try:
-                    e.update(dt, window_width=LARGURA, ground_y=ALTURA)
+                    e.update(dt, window_width=LARGURA, ground_y=PLATFORM_Y)
                 except Exception:
                     try:
                         e.update(dt)
@@ -296,7 +308,8 @@ def game_screen(window, clock, assets):
                         feet_h = 12
                         feet_w = max(24, int(dante.rect.width * 0.3))
                         feet_x = dante.rect.centerx - feet_w // 2
-                        feet_y = dante.rect.bottom - feet_h
+                        # usar PLATFORM_Y para a checagem dos pés (base na plataforma)
+                        feet_y = PLATFORM_Y - feet_h
                         feet_rect = pygame.Rect(feet_x, feet_y, feet_w, feet_h)
                         if feet_rect.colliderect(t['rect']):
                             try:
