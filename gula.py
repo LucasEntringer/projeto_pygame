@@ -1,8 +1,6 @@
 import pygame
 import random
 import math
-from config import GRAVIDADE # Importa a gravidade para o projétil
-
 
 # ===== CONFIGURAÇÕES DOS TIROS (COXAS) =====
 COXA_DAMAGE = 10
@@ -14,61 +12,6 @@ COXA_SHOOT_DELAY = 3000  # ms entre cada tiro ← CONTROLE AQUI O DELAY
 
 SPEED_SCALE = 0.90
 ATTACK_ANIM_DELAY = 100
-
-
-class CoxaDeFrango(pygame.sprite.Sprite):
-    def __init__(self, x, y, facing, assets, groups=None):
-        super().__init__(groups)
-        
-        self.image_base = assets.get('gula_coxa') # Usa a chave do assets.py
-        if self.image_base:
-            # ALTURA é 720, importada de config
-            self.image_base = pygame.transform.scale(self.image_base, (40, 20)) 
-        else:
-            # Fallback visual se a imagem faltar
-            self.image_base = pygame.Surface((40, 20), pygame.SRCALPHA)
-            pygame.draw.ellipse(self.image_base, (230, 120, 20), (0, 0, 40, 20))
-            
-        self.facing = facing
-        self.image = self.image_base if facing == 1 else pygame.transform.flip(self.image_base, True, False)
-        
-        self.rect = self.image.get_rect(center=(x, y))
-        
-        # Inverte a velocidade horizontal se estiver virado para a esquerda
-        self.speedx = COXA_VELOCITY_X * facing
-        self.speedy = COXA_VELOCITY_Y 
-        self.damage = COXA_DAMAGE
-        self.spawn_time = pygame.time.get_ticks()
-
-    def update(self, dt):
-        # Aplica Gravidade
-        self.speedy += GRAVIDADE
-        
-        # Movimento
-        self.rect.x += int(self.speedx)
-        self.rect.y += int(self.speedy)
-        
-        # Rotação do projétil (opcional)
-        if self.speedx != 0:
-            # Calcula o ângulo de voo
-            angle = math.degrees(math.atan2(-self.speedy, self.speedx))
-            temp_image = pygame.transform.rotate(self.image_base, angle)
-            
-            # Se for left (-1), flipa o resultado
-            if self.facing == -1:
-                # Rotaciona o frame flipado
-                temp_image = pygame.transform.flip(temp_image, True, False) 
-            
-            # Preserva o centro ao trocar a imagem para evitar jitter
-            center = self.rect.center
-            self.image = temp_image
-            self.rect = self.image.get_rect(center=center)
-        
-        # Remoção do projétil (expira ou sai da tela)
-        now = pygame.time.get_ticks()
-        # ALTURA (720) é a constante definida em config.py
-        if now - self.spawn_time > COXA_LIFESPAN or self.rect.bottom > 720 + 20: 
-            self.kill()
 
 
 class BossGula(pygame.sprite.Sprite):
@@ -96,7 +39,6 @@ class BossGula(pygame.sprite.Sprite):
             self.coxa_img = pygame.Surface((temp_w, temp_h), pygame.SRCALPHA)
             pygame.draw.ellipse(self.coxa_img, (230, 120, 20), (0, 0, temp_w, temp_h))
         
-
         # Escala a coxa para o tamanho desejado
         self.coxa_weapon = pygame.transform.scale(self.coxa_img, (COXA_WIDTH, COXA_HEIGHT))
 
@@ -104,7 +46,6 @@ class BossGula(pygame.sprite.Sprite):
         # Então quando o jogador está à esquerda, NÃO flipamos (usamos original)
         # Quando o jogador está à direita, flipamos
         self.facing = -1  # -1 = esquerda (original), 1 = direita (flipado)
-
         
         self.image = self.idle_frames[0] if self.idle_frames else pygame.Surface((180, 180), pygame.SRCALPHA)
         if not self.idle_frames and not self.walk_frames:
@@ -130,21 +71,16 @@ class BossGula(pygame.sprite.Sprite):
         self.attack_anim_timer = 0
         self.attack_anim_delay = ATTACK_ANIM_DELAY
 
-
         # Sistema de tiro
         self.shoot_timer = 0
-
 
         self.is_dying = False
         self.die_index = 0
         self.die_timer = 0
         self.die_delay = 120
 
-
         self.coxas = []  # Lista de projéteis (tiros)
-
         self.atacando = False
-        self.assets = assets # Guarda assets para instanciar o projétil
 
     def take_damage(self, amount):
         if not self.alive_flag:
@@ -156,7 +92,7 @@ class BossGula(pygame.sprite.Sprite):
             self.is_dying = True
             self.die_index = 0
             self.die_timer = 0
-
+            self.coxas = []
 
     def atirar_coxa(self):
         """Dispara uma coxa de frango na direção que o boss está olhando"""
@@ -234,7 +170,6 @@ class BossGula(pygame.sprite.Sprite):
                 # Fallback: desenha um retângulo
                 pygame.draw.rect(surface, (230, 120, 20), p['rect'])
 
-
     def _select_frame_and_apply_flip(self, base_frames, dt):
         """Seleciona frame e aplica flip se necessário"""
         if not base_frames:
@@ -261,7 +196,6 @@ class BossGula(pygame.sprite.Sprite):
     def update(self, dt, window_width=None, ground_y=None, player=None):
         # === ANIMAÇÃO DE MORTE ===
         if getattr(self, 'is_dying', False):
-            # Lógica de morte
             self.die_timer += dt
             if self.die_timer >= self.die_delay:
                 self.die_timer -= self.die_delay
@@ -286,9 +220,7 @@ class BossGula(pygame.sprite.Sprite):
             return
 
         if not self.alive_flag:
-
             return
-
 
         # === LÓGICA DE COMPORTAMENTO ===
         if player is not None and getattr(player, "rect", None) is not None:
@@ -319,14 +251,11 @@ class BossGula(pygame.sprite.Sprite):
                 # Distância ideal: para e atira
                 self.state = "idle"
                 
-
-
                 # Sistema de tiro
                 self.shoot_timer += dt
                 if self.shoot_timer >= COXA_SHOOT_DELAY:
                     self.shoot_timer = 0
                     self.atirar_coxa()
-
         else:
             self.state = "idle"
             self.shoot_timer = 0
@@ -372,7 +301,6 @@ class BossGula(pygame.sprite.Sprite):
                 self.atacando = False
                 self.attack_anim_idx = 0
                 self.attack_anim_timer = 0
-
 
         # === ATUALIZA PROJÉTEIS ===
         self.atualizar_coxas(dt, window_width)
