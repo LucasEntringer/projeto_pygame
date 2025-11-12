@@ -9,19 +9,18 @@ import random
 from ganancia import BossGanancia
 
 def menu_screen(window, clock, assets):
-    assets = load_assets()
 
-    TAMANHO_NORMAL = 70
-    TAMANHO_HOVER = 75
+    TAMANHO_NORMAL = 60
+    TAMANHO_HOVER = 65
 
-    font_normal = pygame.font.SysFont("Georgia", TAMANHO_NORMAL, bold=True)
-    font_hover = pygame.font.SysFont("Georgia", TAMANHO_HOVER, bold=True)
+    font_normal = pygame.font.SysFont("Bookman Old Style", TAMANHO_NORMAL, bold=True)
+    font_hover = pygame.font.SysFont("Bookman Old Style", TAMANHO_HOVER, bold=True)
 
-    COLOR_NORMAL = (180, 180, 180)
-    COLOR_HOVER = (255, 255, 255)
+    COLOR_NORMAL = (204, 153, 0)
+    COLOR_HOVER = (255, 255, 153)
 
     #fontes e cores
-    font_menu = pygame.font.SysFont("Georgia", 50)
+    font_menu = pygame.font.SysFont("Bookman Old Style", 50)
     BTN_COLOR = (100, 100, 100)
     BTN_HOVER_COLOR = (150, 150, 150)
     TEXT_COLOR = (255, 255, 255)
@@ -67,24 +66,24 @@ def menu_screen(window, clock, assets):
         window.blit(background,(0,0))
 
         if start_btn.collidepoint(mouse_pos):
-            text_surf = font_hover.render("Iniciar", True, COLOR_HOVER)
+            text_surf = font_hover.render("INICIAR", True, COLOR_HOVER)
         else:
-            text_surf = font_normal.render("Iniciar", True, COLOR_NORMAL)
+            text_surf = font_normal.render("INICIAR", True, COLOR_NORMAL)
         
         text_rect = text_surf.get_rect(center=start_btn.center)
         window.blit(text_surf, text_rect)
 
         if command_btn.collidepoint(mouse_pos):
-            text_surf = font_hover.render("Comandos", True, COLOR_HOVER)
+            text_surf = font_hover.render("COMANDOS", True, COLOR_HOVER)
         else:
-            text_surf = font_normal.render("Comandos", True, COLOR_NORMAL)
+            text_surf = font_normal.render("COMANDOS", True, COLOR_NORMAL)
         text_rect = text_surf.get_rect(center=command_btn.center)
         window.blit(text_surf, text_rect)
         
         if exit_btn.collidepoint(mouse_pos):
-            text_surf = font_hover.render("Sair", True, COLOR_HOVER)
+            text_surf = font_hover.render("SAIR", True, COLOR_HOVER)
         else:
-            text_surf = font_normal.render("Sair", True, COLOR_NORMAL)
+            text_surf = font_normal.render("SAIR", True, COLOR_NORMAL)
             
         text_rect = text_surf.get_rect(center=exit_btn.center)
         window.blit(text_surf, text_rect)
@@ -111,10 +110,9 @@ def command_screen(window, clock, assets):
 
 
 def game_screen(window, clock, assets):
-    font = pygame.font.SysFont("Segoe UI Symbol", 40)
+    font = pygame.font.SysFont("Bookman Old Style", 40)
     HEART_COLOR = (220, 20, 60)
 
-    assets = load_assets()
     all_sprites = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
 
@@ -324,6 +322,7 @@ def game_screen(window, clock, assets):
                                 dante.dano(amount=e.damage)
                             except Exception:
                                 dante.dano(amount=20)
+                            assets['hurt_sound'].play()
                             t['active_until'] = now - 1
 
             if hasattr(e, 'coxas') and getattr(e, 'coxas'):
@@ -334,6 +333,7 @@ def game_screen(window, clock, assets):
                             dante.dano(amount=c.get('dano', 18))
                         except Exception:
                             dante.dano(amount=18)
+                        assets['hurt_sound'].play()
                         try:
                             e.coxas.remove(c)
                         except ValueError:
@@ -448,8 +448,8 @@ def game_screen(window, clock, assets):
     return MENU_STATE
 
 def game_over_screen(window, clock, assets):
-    font_titulo = pygame.font.SysFont("Georgia", 70)
-    font_instrucao = pygame.font.SysFont("Segoe UI Symbol", 30)
+    font_titulo = pygame.font.SysFont("Georgia", 100)
+    font_instrucao = pygame.font.SysFont("Segoe UI Symbol", 40)
     VERMELHO = (200, 0, 0)
     BRANCO = (255, 255, 255)
     PRETO = (0, 0, 0)
