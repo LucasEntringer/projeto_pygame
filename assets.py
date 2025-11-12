@@ -137,6 +137,48 @@ def load_assets():
                 break
     assets[GULA_COXA] = coxa_img
 
+        # ===== GANÂNCIA =====
+    GANANCIA_IDLE = 'ganancia_idle'
+    ganancia_idle_folder = os.path.join(IMG_DIR, "ganancia_parado")
+    ganancia_idle_frames = []
+    if os.path.isdir(ganancia_idle_folder):
+        files = [f for f in os.listdir(ganancia_idle_folder) if f.lower().endswith(".png")]
+        files = sorted(files, key=_numeric_sort_key)
+        for fn in files:
+            ganancia_idle_frames.append(pygame.image.load(os.path.join(ganancia_idle_folder, fn)).convert_alpha())
+    assets[GANANCIA_IDLE] = ganancia_idle_frames
+
+    GANANCIA_WALK = 'ganancia_walk'
+    ganancia_walk_folder = os.path.join(IMG_DIR, "ganancia_andando")
+    ganancia_walk_frames = []
+    if os.path.isdir(ganancia_walk_folder):
+        files = [f for f in os.listdir(ganancia_walk_folder) if f.lower().endswith(".png")]
+        files = sorted(files, key=_numeric_sort_key)
+        for fn in files:
+            ganancia_walk_frames.append(pygame.image.load(os.path.join(ganancia_walk_folder, fn)).convert_alpha())
+    assets[GANANCIA_WALK] = ganancia_walk_frames
+
+    GANANCIA_ATTACK = 'ganancia_attack'
+    ganancia_attack_folder = os.path.join(IMG_DIR, "ganancia_ataque")
+    ganancia_attack_frames = []
+    if os.path.isdir(ganancia_attack_folder):
+        files = [f for f in os.listdir(ganancia_attack_folder) if f.lower().endswith(".png")]
+        files = sorted(files, key=_numeric_sort_key)
+        for fn in files:
+            ganancia_attack_frames.append(pygame.image.load(os.path.join(ganancia_attack_folder, fn)).convert_alpha())
+    assets[GANANCIA_ATTACK] = ganancia_attack_frames
+
+    GANANCIA_DIE = 'ganancia_die'
+    ganancia_die_folder = os.path.join(IMG_DIR, "ganancia_morrendo")
+    ganancia_die_frames = []
+    if os.path.isdir(ganancia_die_folder):
+        files = [f for f in os.listdir(ganancia_die_folder) if f.lower().endswith(".png")]
+        files = sorted(files, key=_numeric_sort_key)
+        for fn in files:
+            ganancia_die_frames.append(pygame.image.load(os.path.join(ganancia_die_folder, fn)).convert_alpha())
+    assets[GANANCIA_DIE] = ganancia_die_frames
+
+
     #Background menu
     MENU_BACK = 'menu_back'
     assets[MENU_BACK] = pygame.image.load(os.path.join(IMG_DIR, "menu_hell.jpg")).convert()
