@@ -12,7 +12,7 @@ GRAVIDADE = 1
 
 #Pasta que contem os sons
 
-SND_DIR=path.join(path.dirname(__file__), 'assets', 'sounds')
+SND_DIR = path.join(path.dirname(__file__), 'assets', 'sounds')
 
 
 #Controle de fluxos
