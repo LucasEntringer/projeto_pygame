@@ -1,3 +1,4 @@
+
 # ganancia.py
 import pygame
 import random
@@ -5,7 +6,34 @@ from classes import Dante
 from config import LARGURA, ALTURA, FPS
 
 class BossGanancia(pygame.sprite.Sprite):
+    """
+    Classe que representa o boss Ganância (Avareza) do jogo.
+    Este boss é um inimigo voador que se move pelo ar, atira projéteis em forma de moedas
+    e possui animações de idle, ataque e morte.
+    """
+    
     def __init__(self, x, y, assets=None, groups=None):
+        """
+        Inicializa o Boss Ganância com sua posição inicial, sprites e configurações.
+        
+        Recebe:
+            x (int): Posição X inicial do boss
+            y (int): Posição Y inicial do boss
+            assets (dict): Dicionário contendo os frames de animação do boss
+            groups (iterable): Grupos de sprites aos quais o boss deve ser adicionado
+        
+        Faz:
+            - Inicializa o sprite base do Pygame
+            - Adiciona o boss aos grupos fornecidos
+            - Define HP base, dano e estado inicial
+            - Carrega os frames de animação dos assets
+            - Cria a imagem de projétil (moeda dourada)
+            - Define limites de movimento e posição alvo aleatória
+            - Inicializa variáveis de animação e controle
+        
+        Retorna:
+            Nada (construtor)
+        """
         # Inicializa o sprite sem passar `groups` diretamente
         super().__init__()
 
@@ -54,20 +82,78 @@ class BossGanancia(pygame.sprite.Sprite):
         self.is_dying = False
 
     def set_state(self, new_state):
+        """
+        Altera o estado do boss e reseta os contadores de animação.
+        
+        Recebe:
+            new_state (str): Novo estado a ser definido ('idle', 'attack' ou 'die')
+        
+        Faz:
+            - Verifica se o novo estado é diferente do atual
+            - Se for diferente, atualiza o estado
+            - Reseta o índice do frame de animação para 0
+            - Reseta o timer de animação para 0
+        
+        Retorna:
+            Nada (void)
+        """
         if new_state == self.state: return
         self.state = new_state
         self.frame_index = 0
         self.frame_timer = 0
 
     def take_damage(self, amount):
+        """
+        Aplica dano ao boss e inicia um ataque como reação.
+        
+        Recebe:
+            amount (int): Quantidade de dano a ser aplicada ao HP do boss
+        
+        Faz:
+            - Verifica se o boss está vivo e não está morrendo
+            - Subtrai o dano do HP atual (não permite HP negativo)
+            - Muda o estado do boss para 'attack' como reação ao dano
+        
+        Retorna:
+            Nada (void)
+        """
         if self.alive_flag and not self.is_dying:
             self.hp = max(0, self.hp - amount)
             self.set_state('attack') # Reage ao dano iniciando um ataque
 
     def notify_player_attack(self):
+        """
+        Notifica o boss que o jogador está atacando.
+        
+        Recebe:
+            Nada
+        
+        Faz:
+            - Muda o estado do boss para 'attack'
+        
+        Retorna:
+            Nada (void)
+        """
         self.set_state('attack')
 
     def _animate(self, dt):
+        """
+        Gerencia a animação do boss baseada no estado atual.
+        
+        Recebe:
+            dt (int): Delta time em milissegundos desde o último frame
+        
+        Faz:
+            - Incrementa o timer de animação com o delta time
+            - Seleciona os frames corretos baseado no estado (dying, attack ou idle)
+            - Avança para o próximo frame quando o delay é atingido
+            - Gerencia o fim das animações (morte para no último frame, ataque volta ao idle, idle faz loop)
+            - Aplica flip horizontal na sprite se o boss estiver olhando para a esquerda
+            - Atualiza a imagem e o rect mantendo a posição central
+        
+        Retorna:
+            Nada (void)
+        """
         self.frame_timer += dt
         
         frames = []
@@ -106,6 +192,29 @@ class BossGanancia(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=anchor)
 
     def update(self, dt, **kwargs):
+        """
+        Atualiza o boss a cada frame do jogo.
+        
+        Recebe:
+            dt (int): Delta time em milissegundos desde o último frame
+            **kwargs: Argumentos adicionais, especialmente 'player' (objeto Dante) para referência ao jogador
+        
+        Faz:
+            - Verifica se o HP chegou a zero e inicia animação de morte
+            - Retorna imediatamente se o boss já morreu
+            - Move o boss em direção a uma posição alvo aleatória (voo)
+            - Escolhe nova posição alvo quando alcança a atual
+            - Atualiza a direção que o boss está olhando baseado no movimento
+            - Chama a função de animação
+            - Gerencia o timer de disparo de projéteis
+            - Cria novos projéteis (moedas) direcionados ao jogador a cada intervalo
+            - Atualiza a posição de todos os projéteis ativos
+            - Remove projéteis que expiraram ou colidiram com o jogador
+            - Aplica dano ao jogador quando um projétil o atinge
+        
+        Retorna:
+            Nada (void)
+        """
         if self.hp <= 0 and not self.is_dying:
             self.is_dying = True
             self.set_state('die')
@@ -170,5 +279,18 @@ class BossGanancia(pygame.sprite.Sprite):
                     pass
 
     def draw_traces(self, surface):
+        """
+        Desenha todos os projéteis do boss na tela.
+        
+        Recebe:
+            surface (pygame.Surface): Superfície do Pygame onde os projéteis serão desenhados
+        
+        Faz:
+            - Itera por todos os projéteis ativos na lista
+            - Desenha (blit) cada imagem de projétil na sua posição atual
+        
+        Retorna:
+            Nada (void)
+        """
         for p in self.projectiles:
             surface.blit(self.projectile_img, p['rect'])
