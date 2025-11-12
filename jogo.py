@@ -6,6 +6,7 @@ from ira import BossIra
 from classes import Dante
 from gula import BossGula
 import random
+from ganancia import BossGanancia
 
 def menu_screen(window, clock, assets):
     assets = load_assets()
@@ -98,9 +99,10 @@ def game_screen(window, clock, assets):
     # estiverem na sala correta.
     gula = None
     ira = None
+    luxuria = None
 
     def spawn_bosses_for_room(room):
-        nonlocal gula, ira
+        nonlocal gula, ira, luxuria
         # Remove bosses que estão no grupo se não pertencerem à sala atual
         # (a remoção do Group é feita no loop principal abaixo)
         # Cria instâncias apenas se necessário (lazy)
@@ -108,6 +110,11 @@ def game_screen(window, clock, assets):
             bx = LARGURA // 2 + 100
             by = ALTURA - 10
             gula = BossGula(bx, by, assets=assets, patrol_min_x=120, patrol_max_x=LARGURA - 120, speed=2.0)
+        if room == 4 and luxuria is None:
+            bx = LARGURA // 2
+            by = ALTURA // 3
+            # adapte os argumentos de BossGanancia conforme quiser (x,y,assets,groups...)
+            luxuria = BossGanancia(bx, by, assets=assets)
         if room == 6 and ira is None:
             bx = LARGURA // 2 + 100
             by = ALTURA - 10
@@ -174,7 +181,7 @@ def game_screen(window, clock, assets):
         # checagem para cada boss existente (expande fácil pra futuros)
         bosses_por_sala = {
             2: gula,
-            4: getattr(globals(), "luxuria", None),  # placeholder para o futuro boss da sala 4
+            4: luxuria,
             6: ira
         }
 
@@ -198,13 +205,10 @@ def game_screen(window, clock, assets):
                 # adiciona/remover bosses conforme sala
                 if gula and current_room == 2 and gula not in enemies:
                     enemies.add(gula)
+                if luxuria and current_room == 4 and luxuria not in enemies:
+                    enemies.add(luxuria)
                 if ira and current_room == 6 and ira not in enemies:
                     enemies.add(ira)
-                # futuro boss (sala 4)
-                if "luxuria" in globals():
-                    luxuria = globals()["luxuria"]
-                    if luxuria and current_room == 4 and luxuria not in enemies:
-                        enemies.add(luxuria)
 
                 # remove bosses fora da sala
                 for sala, boss in bosses_por_sala.items():
@@ -310,7 +314,17 @@ def game_screen(window, clock, assets):
             except Exception:
                 pass
             gula = None
-        
+
+        if luxuria is not None and not luxuria.alive_flag:
+            try:
+                luxuria.kill()
+            except Exception:
+                pass
+            try:
+                enemies.remove(luxuria)
+            except Exception:
+                pass
+            luxuria = None
         # CORREÇÃO: Inicia a animação de morte, mas NÃO retorna ainda
         if dante.lives <= 0:
             if not getattr(dante, 'is_dying', False) and not getattr(dante, 'die_played', False):
@@ -345,6 +359,8 @@ def game_screen(window, clock, assets):
             boss_for_hud = ira
         elif gula is not None:
             boss_for_hud = gula
+        elif luxuria is not None:
+            boss_for_hud = luxuria
 
         if boss_for_hud is not None:
             bar_w = 420
