@@ -305,11 +305,15 @@ def game_screen(window, clock, assets):
             if hasattr(e, 'traces') and getattr(e, 'traces'):
                 for t in list(e.traces):
                     if now >= t['warn_until'] and now < t['active_until']:
-                        feet_h = 12
-                        feet_w = max(24, int(dante.rect.width * 0.3))
+                        # versão alinhada: deixa a área dos pés maior e "encaixa" verticalmente com o hitbox do trace
+                        feet_h = 28
+                        feet_w = max(32, int(dante.rect.width * 0.45))
                         feet_x = dante.rect.centerx - feet_w // 2
-                        # usar PLATFORM_Y para a checagem dos pés (base na plataforma)
-                        feet_y = PLATFORM_Y - feet_h
+
+                        # alinha verticalmente: coloca os pés um pouco acima de PLATFORM_Y e
+                        # também permite que a área encaixe com o topo do trace (t['rect'].top)
+                        feet_y = min(PLATFORM_Y - feet_h, t['rect'].top + 4)
+
                         feet_rect = pygame.Rect(feet_x, feet_y, feet_w, feet_h)
                         if feet_rect.colliderect(t['rect']):
                             try:
