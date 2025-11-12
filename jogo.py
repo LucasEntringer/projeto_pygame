@@ -4,8 +4,8 @@ from config import LARGURA, ALTURA, FPS, IMG_DIR, SND_DIR, MENU_STATE, GAME_STAT
 from assets import load_assets
 from ira import BossIra
 from classes import Dante
-# Importa apenas BossGula (CoxaDeFrango removida)
-from gula import BossGula
+# Importa BossGula e a nova classe CoxaDeFrango
+from gula import BossGula, CoxaDeFrango 
 import random
 
 def menu_screen(window, clock, assets):
@@ -43,7 +43,7 @@ def menu_screen(window, clock, assets):
 
     running_menu = True
     while running_menu:
-        clock.tick(FPS) 
+        clock.tick(FPS) # Limita o FPS
         mouse_pos = pygame.mouse.get_pos()
 
         for event in pygame.event.get():
@@ -87,7 +87,7 @@ def game_screen(window, clock, assets):
 
     all_sprites = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
-    # projectiles = pygame.sprite.Group() # REMOVIDO: Não há mais projéteis
+    projectiles = pygame.sprite.Group() 
     
     dante = Dante(groups=[all_sprites], assets=assets)
 
@@ -96,10 +96,19 @@ def game_screen(window, clock, assets):
     by = ALTURA - 10
     gula = BossGula(bx, by, assets=assets, patrol_min_x=120, patrol_max_x=LARGURA - 120, speed=2.0)
     enemies.add(gula)
-    all_sprites.add(gula) 
+    all_sprites.add(gula) # Adiciona Gula para update e draw
     
     # Ira começa como None
     ira = None
+
+    # Carregamento do background (fora do loop principal para otimização)
+    bg_path = os.path.join(IMG_DIR, 'inferno', 'Cenario_inferno.png')
+    try:
+        bg = pygame.image.load(bg_path).convert()
+        bg = pygame.transform.scale(bg, (LARGURA, ALTURA))
+    except (pygame.error, FileNotFoundError):
+        bg = None
+
 
     running = True
     pygame.mixer.music.stop()
@@ -108,16 +117,7 @@ def game_screen(window, clock, assets):
     pygame.mixer.music.play(loops=-1)
 
     while running:
-        dt = clock.tick(FPS) 
-
-        bg_path = os.path.join(IMG_DIR, 'inferno', 'Cenario_inferno.png')
-        try:
-            bg = pygame.image.load(bg_path).convert()
-            bg = pygame.transform.scale(bg, (LARGURA, ALTURA))
-        except pygame.error:
-            bg = None
-        except FileNotFoundError:
-            bg = None
+        dt = clock.tick(FPS) # Limita o FPS e calcula o tempo delta (dt)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -133,7 +133,7 @@ def game_screen(window, clock, assets):
                         assets['atk_sound'].play()
                         dante.attack(enemies)
                         for e in enemies:
-                            # Notifica o boss sobre o ataque (se tiver o método)
+                            # Notifica o boss sobre o ataque
                             if hasattr(e, 'notify_player_attack'):
                                 e.notify_player_attack()
 
@@ -155,11 +155,11 @@ def game_screen(window, clock, assets):
             # Garante que pare de se mover durante a morte
             dante.parar()
 
-        # --- Limite de Movimento de Dante ---
+        # Limite de Movimento de Dante
         dante.rect.left = max(dante.rect.left, 0)
-        # --------------------------------------
 
         # --- LÓGICA DE TRANSIÇÃO DE FASE: GULA -> IRA ---
+        # A transição só ocorre se Gula estiver morto E Dante atingir o limite direito.
         if gula is None and ira is None and dante.rect.centerx >= LARGURA - 120:
             
             # Reposiciona Dante para o início da nova "tela"
@@ -172,19 +172,31 @@ def game_screen(window, clock, assets):
             ira = BossIra(bx, by, assets=assets)
             enemies.add(ira)
             all_sprites.add(ira)
-        # -------------------------------------------------
 
 
         all_sprites.update(dt)
-        # projectiles.update(dt) # REMOVIDO: Não há mais projéteis
+        projectiles.update(dt) # ATUALIZA OS PROJÉTEIS
+        
+        # --- COLISÃO: DANTE E PROJÉTEIS ---
+        hits = pygame.sprite.spritecollide(dante, projectiles, True, pygame.sprite.collide_mask)
+        for hit in hits:
+            damage_amount = getattr(hit, 'damage', 10) # Usa o dano do projétil
+            dante.dano(amount=damage_amount)
+            assets['hurt_sound'].play()
 
         now = pygame.time.get_ticks()
         for e in list(enemies):
             # --- Atualização do Inimigo ---
             if hasattr(e, 'update'):
                 if isinstance(e, BossGula):
-                    # Gula.update agora NÃO retorna projéteis
-                    e.update(dt, window_width=LARGURA, ground_y=ALTURA, player=dante)
+                    # Gula.update retorna o projétil, se um for lançado
+                    new_projectiles = e.update(dt, window_width=LARGURA, ground_y=ALTURA, player=dante)
+                    # Adiciona o novo projétil aos grupos
+                    for p in new_projectiles:
+                        if p is not None:
+                            projectiles.add(p)
+                            all_sprites.add(p) # Adiciona ao all_sprites para desenho
+
                 elif isinstance(e, BossIra):
                     e.update(dt, window_width=LARGURA, ground_y=ALTURA)
                 else:
@@ -215,30 +227,33 @@ def game_screen(window, clock, assets):
                         gula.kill()
                         enemies.remove(gula)
                         gula = None
+                        # Remove projéteis pendentes do Gula
+                        for p in list(projectiles):
+                            if isinstance(p, CoxaDeFrango):
+                                p.kill()
         
-        # --- REMOVIDO: Lógica de Colisão Projétil (Coxa) vs Dante ---
-        # Removido bloco que verificava hit_coxas.
-
-        # Inicia a animação de morte, mas NÃO retorna ainda
+        # Inicia a animação de morte
         if dante.lives <= 0:
             if not getattr(dante, 'is_dying', False) and not getattr(dante, 'die_played', False):
                 dante.morrer()
                 assets['hurt_sound'].play()
 
+        # Desenho do background
         if bg:
             window.blit(bg, (0, 0))
         else:
             window.fill((30, 30, 30))
 
-        # --- Desenho de Traços/Coxas ---
+        # Desenho da coxa na mão do Gula (draw_traces é usado como draw_weapon)
+        # O Gula.draw_traces() foi desabilitado, mas o Ira.draw_traces() permanece
         for e in enemies:
             if hasattr(e, 'draw_traces'):
                 e.draw_traces(window)
-        # --------------------------------
 
+        # Desenho de todos os sprites (inclui Gula, Ira, Dante e Projéteis)
         all_sprites.draw(window)
 
-        # Lógica HUD
+        # Lógica HUD do Boss
         boss_for_hud = None
         if ira is not None:
             boss_for_hud = ira
@@ -258,7 +273,6 @@ def game_screen(window, clock, assets):
             window.blit(s_bg, (bg_rect.x, bg_rect.y))
 
             name_font = pygame.font.SysFont(None, 28)
-            # Verifica o tipo de boss explicitamente
             if isinstance(boss_for_hud, BossIra):
                 boss_name = "IRA"
                 boss_base_hp = boss_for_hud.base_hp
@@ -267,7 +281,7 @@ def game_screen(window, clock, assets):
                 boss_base_hp = boss_for_hud.base_hp
             else:
                 boss_name = "BOSS"
-                boss_base_hp = 1 # Evita divisão por zero
+                boss_base_hp = 1
 
             name_surf = name_font.render(boss_name, True, (230, 230, 230))
             name_pos = (x + (bar_w - name_surf.get_width()) // 2, y - 2)
@@ -290,7 +304,7 @@ def game_screen(window, clock, assets):
 
         pygame.display.flip()
 
-        # SÓ VAI PARA GAME OVER quando a animação de morte terminar
+        # FIM DE JOGO
         if dante.lives <= 0 and getattr(dante, 'die_played', False):
             return GAME_OVER_STATE
             
@@ -333,7 +347,7 @@ def main():
     window = pygame.display.set_mode((LARGURA, ALTURA))
     pygame.display.set_caption("Meu inferninho")
     
-    # CORREÇÃO: Cria a instância do Clock corretamente
+    # Cria a instância do Clock corretamente
     clock = pygame.time.Clock()
     
     # Carrega os assets
