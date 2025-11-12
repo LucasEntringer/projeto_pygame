@@ -540,6 +540,10 @@ def victory_screen(window, clock, assets):
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     return MENU_STATE
+        
+        if now - last_update > BLINK_INTERVAL:
+            show_text = not show_text 
+            last_update = now
 
         if victory_bg_img:
             window.blit(victory_bg_img, (0, 0))
