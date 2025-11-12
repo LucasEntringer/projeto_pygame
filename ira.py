@@ -13,6 +13,20 @@ ATTACK_ANIM_DELAY = 120       # ms entre frames de animação de ataque
 
 class BossIra(pygame.sprite.Sprite):
     def __init__(self, x, y, assets, hp=500, damage=18):
+        """
+        Inicializa o Boss Ira.
+        
+        Serve para: Criar uma instância do boss Ira com todas as suas propriedades, animações e comportamentos.
+        
+        Recebe:
+            x (int): Posição horizontal inicial do boss
+            y (int): Posição vertical inicial do boss
+            assets (dict): Dicionário contendo as imagens e animações carregadas
+            hp (int): Pontos de vida iniciais do boss (padrão: 500)
+            damage (int): Dano causado pelos ataques do boss (padrão: 18)
+        
+        Retorna: None (é um construtor)
+        """
         super().__init__()
 
         # assets: tenta ler de assets dict; use fallback se faltar
@@ -72,8 +86,16 @@ class BossIra(pygame.sprite.Sprite):
         self.player_attacked_first = None  # None = undecided
         self.assets = assets
 
-    # ===== comportamentos =====
     def apply_fury(self):
+        """
+        Ativa o modo fúria do boss.
+        
+        Serve para: Aumentar o HP do boss em 50% e aplicar um efeito visual vermelho quando ele entra em fúria.
+        
+        Recebe: None (usa atributos da própria classe)
+        
+        Retorna: None (modifica atributos internos)
+        """
         if not self.fury:
             self.fury = True
             self.hp = int(self.hp * FURY_MULT)
@@ -86,6 +108,16 @@ class BossIra(pygame.sprite.Sprite):
                 pass
 
     def notify_player_attack(self):
+        """
+        Notifica o boss que o jogador atacou.
+        
+        Serve para: Verificar se o jogador atacou antes do boss iniciar seu primeiro ataque. 
+                    Se sim, ativa o modo fúria como punição.
+        
+        Recebe: None (usa atributos da própria classe)
+        
+        Retorna: None (pode chamar apply_fury() internamente)
+        """
         if self.player_attacked_first is not None:
             return
 
@@ -101,8 +133,18 @@ class BossIra(pygame.sprite.Sprite):
             self.apply_fury()
         else:
             self.player_attacked_first = False
+    
     def take_damage(self, amount):
-        """Aplica dano e inicia animação de morte (não mata imediatamente)."""
+        """
+        Aplica dano ao boss.
+        
+        Serve para: Reduzir o HP do boss e iniciar a animação de morte quando o HP chega a zero.
+        
+        Recebe:
+            amount (int): Quantidade de dano a ser aplicada
+        
+        Retorna: None (modifica self.hp e pode ativar self.is_dying)
+        """
         if not self.alive_flag:
             return
         self.hp -= amount
@@ -115,7 +157,19 @@ class BossIra(pygame.sprite.Sprite):
             self.traces = []  # limpar traços ao iniciar morrer
 
     def spawn_traces(self, window_width, ground_y, count=TRACE_COUNT):
-        """Gera traços com fase de warning (pisca) e em seguida fase ativa (causa dano)."""
+        """
+        Gera traços de ataque no chão.
+        
+        Serve para: Criar múltiplos traços vermelhos em posições aleatórias que causam dano ao jogador.
+                    Cada traço tem uma fase de alerta (piscando) seguida de uma fase ativa (causa dano).
+        
+        Recebe:
+            window_width (int): Largura da janela do jogo (para posicionar traços dentro dos limites)
+            ground_y (int): Posição Y do chão (para posicionar traços corretamente)
+            count (int): Quantidade de traços a serem gerados (padrão: TRACE_COUNT = 16)
+        
+        Retorna: None (adiciona traços à lista self.traces)
+        """
         self.traces = []
         now = pygame.time.get_ticks()
         for i in range(count):
@@ -139,7 +193,19 @@ class BossIra(pygame.sprite.Sprite):
             })
 
     def update(self, dt, window_width=None, ground_y=None):
-        """Atualiza timers, animações e gerencia spawn de traços."""
+        """
+        Atualiza o estado do boss a cada frame.
+        
+        Serve para: Gerenciar todas as animações (idle, ataque, morte), controlar timers de ataque,
+                    gerar traços periodicamente e limpar traços expirados.
+        
+        Recebe:
+            dt (int): Delta time - tempo decorrido desde o último frame em milissegundos
+            window_width (int, opcional): Largura da janela (necessário para spawn_traces)
+            ground_y (int, opcional): Posição Y do chão (necessário para spawn_traces)
+        
+        Retorna: None (atualiza self.image, self.rect e outros atributos internos)
+        """
         # --- animação de morte (prioritária) ---
         if getattr(self, 'is_dying', False):
             self.die_timer += dt
@@ -210,7 +276,17 @@ class BossIra(pygame.sprite.Sprite):
         self.traces = [t for t in self.traces if t['active_until'] > now]
 
     def draw_traces(self, surface):
-        """Desenha os traços; piscam enquanto em WARNING e ficam sólidos durante ACTIVE."""
+        """
+        Desenha os traços de ataque na tela.
+        
+        Serve para: Renderizar visualmente os traços, com efeito de piscar durante a fase de alerta
+                    e sólido vermelho durante a fase ativa (quando causam dano).
+        
+        Recebe:
+            surface (pygame.Surface): Superfície onde os traços serão desenhados (geralmente a janela do jogo)
+        
+        Retorna: None (desenha diretamente na surface fornecida)
+        """
         now = pygame.time.get_ticks()
         for t in self.traces:
             vr = t.get('visual', t['rect'])
