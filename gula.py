@@ -16,186 +16,186 @@ ATTACK_ANIM_DELAY = 100
 
 class BossGula(pygame.sprite.Sprite):
     def __init__(self, x, y, assets, hp=420, damage=16, patrol_min_x=100, patrol_max_x=None, speed=2):
+        """
+        Inicializa o chefe 'Gula', configurando sprites, atributos de movimento e combate.
+
+        Parâmetros:
+            x (int): Posição horizontal inicial.
+            y (int): Posição vertical inicial.
+            assets (dict): Dicionário contendo sprites e imagens.
+            hp (int): Vida total do chefe.
+            damage (int): Dano causado ao jogador.
+            patrol_min_x (int): Limite esquerdo de movimentação.
+            patrol_max_x (int): Limite direito de movimentação.
+            speed (float): Velocidade de deslocamento.
+
+        Retorna:
+            None
+        """
         super().__init__()
 
         self.idle_frames = assets.get('gula_idle', []) if assets else []
         self.walk_frames = assets.get('gula_walk', []) if assets else []
         self.attack_frames = assets.get('gula_attack', []) if assets else []
         self.die_frames = assets.get('gula_die', []) if assets else []
-        
-        # Cria caches flipados para morte
+
         self.die_right = list(self.die_frames)
-        try:
-            self.die_left = [pygame.transform.flip(f, True, False) for f in self.die_right]
-        except Exception:
-            self.die_left = list(self.die_right)
-        
-        # Carrega a imagem da coxa
+        self.die_left = [pygame.transform.flip(f, True, False) for f in self.die_right] if self.die_right else []
+
         self.coxa_img = assets.get('gula_coxa') if assets else None
         if not self.coxa_img:
-            # Fallback: cria uma coxa genérica
             temp_w = 50
             temp_h = 20
             self.coxa_img = pygame.Surface((temp_w, temp_h), pygame.SRCALPHA)
             pygame.draw.ellipse(self.coxa_img, (230, 120, 20), (0, 0, temp_w, temp_h))
-        
-        # Escala a coxa para o tamanho desejado
-        self.coxa_weapon = pygame.transform.scale(self.coxa_img, (COXA_WIDTH, COXA_HEIGHT))
 
-        # IMPORTANTE: facing = -1 significa que as sprites ORIGINAIS olham para ESQUERDA
-        # Então quando o jogador está à esquerda, NÃO flipamos (usamos original)
-        # Quando o jogador está à direita, flipamos
-        self.facing = -1  # -1 = esquerda (original), 1 = direita (flipado)
-        
+        self.coxa_weapon = pygame.transform.scale(self.coxa_img, (COXA_WIDTH, COXA_HEIGHT))
+        self.facing = -1
         self.image = self.idle_frames[0] if self.idle_frames else pygame.Surface((180, 180), pygame.SRCALPHA)
         if not self.idle_frames and not self.walk_frames:
             self.image.fill((0, 150, 0))
-            
         self.rect = self.image.get_rect(midbottom=(x, y))
-
         self.hp = int(hp)
         self.base_hp = int(hp)
         self.damage = int(damage)
         self.alive_flag = True
-
         self.patrol_min_x = patrol_min_x
         self.patrol_max_x = patrol_max_x
         self.speed = float(speed)
-
         self.state = "idle"
         self.frame_idx = 0
         self.frame_timer = 0
         self.frame_delay = 200
-
         self.attack_anim_idx = 0
         self.attack_anim_timer = 0
         self.attack_anim_delay = ATTACK_ANIM_DELAY
-
-        # Sistema de tiro
         self.shoot_timer = 0
-
         self.is_dying = False
         self.die_index = 0
         self.die_timer = 0
         self.die_delay = 120
-
-        self.coxas = []  # Lista de projéteis (tiros)
+        self.coxas = []
         self.atacando = False
 
     def take_damage(self, amount):
+        """
+        Aplica dano ao chefe. Se o HP chegar a 0, inicia a animação de morte.
+
+        Parâmetros:
+            amount (int): Quantidade de dano recebido.
+
+        Retorna:
+            None
+        """
         if not self.alive_flag:
             return
         self.hp -= amount
-        if self.hp > 0:
-            return
-        if not self.is_dying:
+        if self.hp <= 0:
             self.is_dying = True
             self.die_index = 0
             self.die_timer = 0
             self.coxas = []
 
     def atirar_coxa(self):
-        """Dispara uma coxa de frango na direção que o boss está olhando"""
-        print(f"[DEBUG] Atirando coxa! Facing: {self.facing}, Pos: {self.rect.center}")
-        try:
-            # Prepara a imagem do projétil
-            img = self.coxa_weapon.copy()
-            # Se facing = 1 (direita), flipa a coxa
-            if self.facing == 1:
-                img = pygame.transform.flip(img, True, False)
-            
-            w, h = img.get_size()
+        """
+        Cria e dispara um projétil (coxa de frango) na direção que o chefe está virado.
 
-            # Posição inicial: na frente do boss
-            if self.facing == 1:  # Olhando para direita
-                sx = self.rect.right + 10
-            else:  # Olhando para esquerda (original)
-                sx = self.rect.left - w - 10
-            
-            sy = self.rect.centery - h // 2
+        Parâmetros:
+            None
 
-            rect = pygame.Rect(sx, sy, w, h)
-
-            # Velocidade: positiva para direita, negativa para esquerda
-            vel = COXA_SPEED * self.facing
-
-            proj = {
-                'rect': rect,
-                'vel': vel,
-                'image': img,
-                'lifetime': COXA_LIFETIME,
-                'damage': COXA_DAMAGE
-            }
-            self.coxas.append(proj)
-            print(f"[DEBUG] Coxa adicionada! Total coxas: {len(self.coxas)}")
-            
-            # Inicia animação de ataque
-            self.atacando = True
-            self.attack_anim_idx = 0
-            self.attack_anim_timer = 0
-            
-        except Exception as e:
-            print(f"[ERRO] ao atirar coxa: {e}")
+        Retorna:
+            None
+        """
+        img = self.coxa_weapon.copy()
+        if self.facing == 1:
+            img = pygame.transform.flip(img, True, False)
+        w, h = img.get_size()
+        sx = self.rect.right + 10 if self.facing == 1 else self.rect.left - w - 10
+        sy = self.rect.centery - h // 2
+        rect = pygame.Rect(sx, sy, w, h)
+        vel = COXA_SPEED * self.facing
+        proj = {
+            'rect': rect,
+            'vel': vel,
+            'image': img,
+            'lifetime': COXA_LIFETIME,
+            'damage': COXA_DAMAGE
+        }
+        self.coxas.append(proj)
+        self.atacando = True
+        self.attack_anim_idx = 0
+        self.attack_anim_timer = 0
 
     def atualizar_coxas(self, dt, window_width):
-        """Atualiza posição dos projéteis e remove os que saíram da tela"""
+        """
+        Atualiza a posição dos projéteis disparados e remove os que saíram da tela.
+
+        Parâmetros:
+            dt (float): Tempo decorrido desde o último quadro (ms).
+            window_width (int): Largura da janela do jogo.
+
+        Retorna:
+            None
+        """
         if not self.coxas:
             return
-        
         to_remove = []
         for p in self.coxas:
-            # Move o projétil
             dx = int(p['vel'] * (dt / 1000.0))
             p['rect'].x += dx
             p['lifetime'] -= dt
-
-            # Remove se saiu da tela ou acabou o lifetime
-            off_left = p['rect'].right < 0
-            off_right = window_width is not None and p['rect'].left > window_width
-            if p['lifetime'] <= 0 or off_left or off_right:
+            if p['lifetime'] <= 0 or p['rect'].right < 0 or (window_width and p['rect'].left > window_width):
                 to_remove.append(p)
-
         for p in to_remove:
-            try:
-                self.coxas.remove(p)
-            except ValueError:
-                pass
+            self.coxas.remove(p)
 
     def draw_traces(self, surface):
-        """Desenha os projéteis (coxas) na tela"""
+        """
+        Desenha os projéteis (coxas) na tela.
+
+        Parâmetros:
+            surface (pygame.Surface): Superfície onde os projéteis serão desenhados.
+
+        Retorna:
+            None
+        """
         for p in self.coxas:
-            try:
-                surface.blit(p['image'], p['rect'])
-            except Exception:
-                # Fallback: desenha um retângulo
-                pygame.draw.rect(surface, (230, 120, 20), p['rect'])
+            surface.blit(p['image'], p['rect'])
 
     def _select_frame_and_apply_flip(self, base_frames, dt):
-        """Seleciona frame e aplica flip se necessário"""
+        """
+        Seleciona o frame de animação apropriado e aplica flip se necessário.
+
+        Parâmetros:
+            base_frames (list): Lista de frames da animação.
+            dt (float): Tempo decorrido desde o último frame (ms).
+
+        Retorna:
+            pygame.Surface: Frame de animação ajustado.
+        """
         if not base_frames:
             return None
-            
         self.frame_timer += dt
         if self.frame_timer >= self.frame_delay:
             self.frame_timer -= self.frame_delay
             self.frame_idx = (self.frame_idx + 1) % len(base_frames)
-        
         frame = base_frames[self.frame_idx]
-        
-        # facing = 1 significa que queremos olhar para DIREITA
-        # Como as sprites originais olham para ESQUERDA, flipamos quando facing = 1
-        if self.facing == 1:
-            try:
-                return pygame.transform.flip(frame, True, False)
-            except Exception:
-                return frame
-        else:
-            # facing = -1: usa sprite original (olhando para esquerda)
-            return frame
+        return pygame.transform.flip(frame, True, False) if self.facing == 1 else frame
 
     def update(self, dt, window_width=None, ground_y=None, player=None):
-        # === ANIMAÇÃO DE MORTE ===
-        if getattr(self, 'is_dying', False):
+        """
+        Atualiza o comportamento do chefe, controlando movimento, ataque, animações e estado de vida.
+
+        Parâmetros:
+            dt (float): Tempo decorrido desde o último quadro (ms).
+            window_width (int): Largura da janela do jogo.
+            ground_y (int): Posição do chão (altura de referência).
+            player (obj): Instância do jogador (para rastrear posição).
+
+        Retorna:
+            None
+        """
+        if self.is_dying:
             self.die_timer += dt
             if self.die_timer >= self.die_delay:
                 self.die_timer -= self.die_delay
@@ -204,8 +204,7 @@ class BossGula(pygame.sprite.Sprite):
                     self.is_dying = False
                     self.alive_flag = False
                     if self.die_right:
-                        # Usa cache correto baseado no facing
-                        last = self.die_right[self.die_index - 1] if self.facing == 1 else self.die_left[self.die_index - 1]
+                        last = self.die_right[-1] if self.facing == 1 else self.die_left[-1]
                         anchor = self.rect.midbottom
                         self.image = last
                         self.rect = self.image.get_rect()
@@ -222,36 +221,23 @@ class BossGula(pygame.sprite.Sprite):
         if not self.alive_flag:
             return
 
-        # === LÓGICA DE COMPORTAMENTO ===
-        if player is not None and getattr(player, "rect", None) is not None:
+        if player and getattr(player, "rect", None):
             dx = player.rect.centerx - self.rect.centerx
             step = max(1, int(self.speed * SPEED_SCALE * (dt / (1000.0 / 60.0))))
-            
-            ATTACK_RANGE = 350  # Distância para começar a atirar
-            MELEE_RANGE = 120   # Distância mínima (para de andar)
-            
-            # === FACING: Define direção baseado na posição do jogador ===
-            # Se jogador está à DIREITA (dx > 0), queremos olhar para DIREITA (facing = 1)
-            # Se jogador está à ESQUERDA (dx < 0), queremos olhar para ESQUERDA (facing = -1)
+            ATTACK_RANGE = 350
             if dx > 0:
-                self.facing = 1  # Olha para direita (flipado)
+                self.facing = 1
             else:
-                self.facing = -1  # Olha para esquerda (original)
-            
-            # === MOVIMENTO ===
+                self.facing = -1
             if abs(dx) > ATTACK_RANGE:
-                # Muito longe: anda em direção ao jogador
                 if dx > 0:
                     self.rect.x += step
                 else:
                     self.rect.x -= step
                 self.state = "walk"
-                self.shoot_timer = 0  # Reseta o timer de tiro
+                self.shoot_timer = 0
             else:
-                # Distância ideal: para e atira
                 self.state = "idle"
-                
-                # Sistema de tiro
                 self.shoot_timer += dt
                 if self.shoot_timer >= COXA_SHOOT_DELAY:
                     self.shoot_timer = 0
@@ -260,25 +246,18 @@ class BossGula(pygame.sprite.Sprite):
             self.state = "idle"
             self.shoot_timer = 0
 
-        # === ANIMAÇÃO VISUAL (walk/idle) ===
-        if self.state == "walk":
-            base = self.walk_frames if self.walk_frames else self.idle_frames
-        else:
-            base = self.idle_frames if self.idle_frames else self.walk_frames
-
+        base = self.walk_frames if self.state == "walk" else self.idle_frames
         if base and self.frame_idx >= len(base):
             self.frame_idx = 0
             self.frame_timer = 0
-             
         frame_to_draw = self._select_frame_and_apply_flip(base, dt)
-        if frame_to_draw is not None:
+        if frame_to_draw:
             anchor = self.rect.midbottom
             self.image = frame_to_draw
             self.rect = self.image.get_rect()
             self.rect.midbottom = anchor
 
-        # === ANIMAÇÃO DE ATAQUE ===
-        frames_attack = self.attack_frames if self.attack_frames else None
+        frames_attack = self.attack_frames
         if self.atacando and frames_attack:
             if self.attack_anim_idx < len(frames_attack):
                 self.attack_anim_timer += dt
@@ -287,20 +266,15 @@ class BossGula(pygame.sprite.Sprite):
                     self.attack_anim_idx += 1
                 if self.attack_anim_idx < len(frames_attack):
                     anchor = self.rect.midbottom
-                    try:
-                        attack_frame = frames_attack[self.attack_anim_idx]
-                        # Aplica flip se olhando para direita
-                        if self.facing == 1:
-                            attack_frame = pygame.transform.flip(attack_frame, True, False)
-                        self.image = attack_frame
-                        self.rect = self.image.get_rect()
-                        self.rect.midbottom = anchor
-                    except Exception:
-                        pass
+                    attack_frame = frames_attack[self.attack_anim_idx]
+                    if self.facing == 1:
+                        attack_frame = pygame.transform.flip(attack_frame, True, False)
+                    self.image = attack_frame
+                    self.rect = self.image.get_rect()
+                    self.rect.midbottom = anchor
             else:
                 self.atacando = False
                 self.attack_anim_idx = 0
                 self.attack_anim_timer = 0
 
-        # === ATUALIZA PROJÉTEIS ===
         self.atualizar_coxas(dt, window_width)
