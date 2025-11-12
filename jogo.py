@@ -9,7 +9,22 @@ import random
 from ganancia import BossGanancia
 
 def menu_screen(window, clock, assets):
+    """
+    Exibe e gerencia a tela de menu principal.
 
+    O que faz:
+        - Renderiza o background do menu.
+        - Mostra botões (Iniciar, Comandos, Sair) e trata hover/click.
+        - Toca a trilha sonora do menu.
+
+    Recebe:
+        window (pygame.Surface): Superfície principal onde o menu será desenhado.
+        clock (pygame.time.Clock): Relógio para controle de FPS.
+        assets (dict): Dicionário contendo imagens e sons necessários.
+
+    Retorna:
+        int: Um dos estados (GAME_STATE, COMMAND_STATE, EXIT_STATE) dependendo da interação do usuário.
+    """
     TAMANHO_NORMAL = 60
     TAMANHO_HOVER = 65
 
@@ -91,6 +106,21 @@ def menu_screen(window, clock, assets):
         pygame.display.flip()
 
 def command_screen(window, clock, assets):
+    """
+    Exibe a tela de comandos/controles do jogo.
+
+    O que faz:
+        - Renderiza a imagem com os comandos.
+        - Aguarda a tecla ESC para retornar ao menu.
+
+    Recebe:
+        window (pygame.Surface): Superfície principal onde a tela será desenhada.
+        clock (pygame.time.Clock): Relógio para controle de FPS.
+        assets (dict): Dicionário contendo imagens (deve conter 'command_scr').
+
+    Retorna:
+        int: MENU_STATE quando o usuário pressionar ESC, ou EXIT_STATE se fechar a janela.
+    """
     command_img = assets["command_scr"]
 
     running_commands = True
@@ -110,6 +140,23 @@ def command_screen(window, clock, assets):
 
 
 def game_screen(window, clock, assets):
+    """
+    Executa o loop principal do jogo (tela de jogo).
+
+    O que faz:
+        - Inicializa sprites, bosses e lógica de salas.
+        - Processa entradas (movimento, pulo, ataque).
+        - Atualiza entidades, projéteis e checa colisões/dano.
+        - Controla transições entre salas e estados (GAME_OVER, VICTORY, MENU).
+
+    Recebe:
+        window (pygame.Surface): Superfície principal onde o jogo será desenhado.
+        clock (pygame.time.Clock): Relógio para controle de FPS.
+        assets (dict): Dicionário contendo imagens, sons e outros recursos.
+
+    Retorna:
+        int: Próximo estado do jogo (MENU_STATE, GAME_OVER_STATE, VICTORY_STATE ou EXIT_STATE).
+    """
     font = pygame.font.SysFont("Bookman Old Style", 40)
     HEART_COLOR = (220, 20, 60)
 
@@ -129,6 +176,18 @@ def game_screen(window, clock, assets):
     luxuria = None
 
     def spawn_bosses_for_room(room):
+        """
+        Cria instâncias dos bosses necessários para a sala atual (lazy instantiation).
+
+        O que faz:
+            - Instancia BossGula, BossGanancia (luxuria) e BossIra quando a sala correspondente for acessada.
+
+        Recebe:
+            room (int): Número da sala atual.
+
+        Retorna:
+            None
+        """
         nonlocal gula, ira, luxuria
         # Remove bosses que estão no grupo se não pertencerem à sala atual
         # (a remoção do Group é feita no loop principal abaixo)
@@ -157,6 +216,19 @@ def game_screen(window, clock, assets):
     # salas: 1,3,5 -> inferno ; 2 -> gula ; 4 -> ganancia ; 6 -> ira
     bg_cache = {}
     def _load_bg_file(filename):
+        """
+        Carrega e redimensiona um arquivo de background a partir da pasta de imagens.
+
+        O que faz:
+            - Monta o caminho a partir de IMG_DIR e carrega a imagem via pygame.
+            - Redimensiona para (LARGURA, ALTURA).
+
+        Recebe:
+            filename (str): Nome do arquivo dentro de IMG_DIR/inferno.
+
+        Retorna:
+            pygame.Surface ou None: A superfície carregada e escalada, ou None se não existir.
+        """
         path = os.path.join(IMG_DIR, 'inferno', filename)
         if not os.path.isfile(path):
             return None
@@ -454,6 +526,22 @@ def game_screen(window, clock, assets):
     return MENU_STATE
 
 def game_over_screen(window, clock, assets): 
+    """
+    Exibe a tela de Game Over.
+
+    O que faz:
+        - Renderiza background de Game Over.
+        - Pisca instrução "PRESSIONE ESC PARA VOLTAR AO MENU".
+        - Aguarda ESC para retornar ao menu ou fechar a janela.
+
+    Recebe:
+        window (pygame.Surface): Superfície principal.
+        clock (pygame.time.Clock): Relógio para controle de FPS.
+        assets (dict): Dicionário de assets (deve conter 'game_over_back').
+
+    Retorna:
+        int: MENU_STATE quando ESC for pressionado, ou EXIT_STATE se a janela for fechada.
+    """
     font_titulo = pygame.font.SysFont("Bookman Old Style", 100)
     font_instrucao = pygame.font.SysFont("Bookman Old Style", 40)
     VERMELHO = (200, 0, 0)
@@ -494,6 +582,23 @@ def game_over_screen(window, clock, assets):
 
 
 def victory_screen(window, clock, assets):
+    """
+    Exibe a tela de vitória do jogo.
+
+    O que faz:
+        - Toca a trilha de vitória (se existir).
+        - Carrega e exibe background de vitória a partir de IMG_DIR/imagem_da_tela_final.
+        - Exibe título com efeito fade-in e instrução piscante para retornar ao menu.
+        - Aguarda ESC para retornar ao menu ou fechar a janela.
+
+    Recebe:
+        window (pygame.Surface): Superfície principal.
+        clock (pygame.time.Clock): Relógio para controle de FPS.
+        assets (dict): Dicionário de assets (opcionalmente usado para ícones e sons).
+
+    Retorna:
+        int: MENU_STATE quando ESC for pressionado, ou EXIT_STATE se a janela for fechada.
+    """
     font_titulo = pygame.font.SysFont("Georgia", 90, bold=True)
     font_instrucao = pygame.font.SysFont("Segoe UI Symbol", 35, bold=True)
     COR_TITULO = (255, 215, 0)
@@ -578,6 +683,21 @@ def victory_screen(window, clock, assets):
 
 
 def main():
+    """
+    Inicializa o Pygame e gerencia o loop principal de estados do jogo.
+
+    O que faz:
+        - Inicializa pygame/mixer e cria a janela.
+        - Carrega assets e define o ícone.
+        - Controla a máquina de estados (MENU, GAME, GAME_OVER, VICTORY, COMMAND).
+        - Encerra o Pygame ao sair.
+
+    Recebe:
+        None (usa variáveis e constantes importadas).
+
+    Retorna:
+        None
+    """
     pygame.init()
     pygame.mixer.init()
     window = pygame.display.set_mode((LARGURA, ALTURA))
@@ -615,3 +735,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
