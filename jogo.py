@@ -14,14 +14,14 @@ def menu_screen(window, clock, assets):
     TAMANHO_NORMAL = 50
     TAMANHO_HOVER = 55
 
-    font_normal = pygame.font.SysFont("Arial", TAMANHO_NORMAL, bold=True)
-    font_hover = pygame.font.SysFont("Arial", TAMANHO_HOVER, bold=True)
+    font_normal = pygame.font.SysFont("Times New Roman", TAMANHO_NORMAL, bold=True)
+    font_hover = pygame.font.SysFont("Times New Roman", TAMANHO_HOVER, bold=True)
 
     COLOR_NORMAL = (180, 180, 180)
     COLOR_HOVER = (255, 255, 255)
 
     #fontes e cores
-    font_menu = pygame.font.SysFont("Arial", 50)
+    font_menu = pygame.font.SysFont("Times New Roman", 50)
     BTN_COLOR = (100, 100, 100)
     BTN_HOVER_COLOR = (150, 150, 150)
     TEXT_COLOR = (255, 255, 255)
