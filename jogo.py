@@ -423,7 +423,7 @@ def game_screen(window, clock, assets):
                 boss_name = "LUXÚRIA"
             else:
                 boss_name = "GULA"
-                
+
             name_surf = name_font.render(boss_name, True, (230, 230, 230))
             name_pos = (x + (bar_w - name_surf.get_width()) // 2, y - 2)
             window.blit(name_surf, name_pos)
@@ -582,6 +582,8 @@ def main():
     
     # Carrega os assets
     assets = load_assets()
+
+    pygame.display.set_icon(assets['game_icon'])
 
     # Define o estado inicial
     current_state = MENU_STATE
