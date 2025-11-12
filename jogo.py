@@ -5,23 +5,22 @@ from assets import load_assets
 from ira import BossIra
 from classes import Dante
 from gula import BossGula
-from ganancia import BossGanancia
 import random
 
 def menu_screen(window, clock, assets):
     assets = load_assets()
 
-    TAMANHO_NORMAL = 50
-    TAMANHO_HOVER = 55
+    TAMANHO_NORMAL = 70
+    TAMANHO_HOVER = 75
 
-    font_normal = pygame.font.SysFont("Arial", TAMANHO_NORMAL, bold=True)
-    font_hover = pygame.font.SysFont("Arial", TAMANHO_HOVER, bold=True)
+    font_normal = pygame.font.SysFont("Dark Hell Font", TAMANHO_NORMAL, bold=True)
+    font_hover = pygame.font.SysFont("Dark Hell Font", TAMANHO_HOVER, bold=True)
 
     COLOR_NORMAL = (180, 180, 180)
     COLOR_HOVER = (255, 255, 255)
 
     #fontes e cores
-    font_menu = pygame.font.SysFont("Arial", 50)
+    font_menu = pygame.font.SysFont("Dark Hell Font", 50)
     BTN_COLOR = (100, 100, 100)
     BTN_HOVER_COLOR = (150, 150, 150)
     TEXT_COLOR = (255, 255, 255)
@@ -43,7 +42,7 @@ def menu_screen(window, clock, assets):
 
     running_menu = True
     while running_menu:
-        clock.tick(FPS)
+        clock.tick(FPS) 
         mouse_pos = pygame.mouse.get_pos()
 
         for event in pygame.event.get():
@@ -91,18 +90,33 @@ def game_screen(window, clock, assets):
 
     dante = Dante(groups=[all_sprites], assets=assets)
 
-    bx = LARGURA // 2 + 100
-    by = ALTURA - 10
-    gula = BossGula(bx, by, assets=assets, patrol_min_x=120, patrol_max_x=LARGURA - 120, speed=2.0)
-    enemies.add(gula)
+    # SISTEMA DE SALAS
+    ROOM_COUNT = 6
+    current_room = 1
 
+    # Nós guardamos referências aos bosses, mas só os adicionamos ao Group quando
+    # estiverem na sala correta.
+    gula = None
     ira = None
-    ganancia = None
+
+    def spawn_bosses_for_room(room):
+        nonlocal gula, ira
+        # Remove bosses que estão no grupo se não pertencerem à sala atual
+        # (a remoção do Group é feita no loop principal abaixo)
+        # Cria instâncias apenas se necessário (lazy)
+        if room == 2 and gula is None:
+            bx = LARGURA // 2 + 100
+            by = ALTURA - 10
+            gula = BossGula(bx, by, assets=assets, patrol_min_x=120, patrol_max_x=LARGURA - 120, speed=2.0)
+        if room == 6 and ira is None:
+            bx = LARGURA // 2 + 100
+            by = ALTURA - 10
+            ira = BossIra(bx, by, assets=assets)
+
+    # certifica-se de criar possíveis bosses da sala inicial (se for sala 1 não faz nada)
+    spawn_bosses_for_room(current_room)
 
     running = True
-    pygame.mixer.music.stop()
-    game_music_path = os.path.join(SND_DIR, 'Verdi_s-Requiem_-II.-Dies-Irae-_CUGMZlvrR4c_.ogg') 
-    pygame.mixer.music.load(game_music_path)
     pygame.mixer.music.play(loops=-1)
 
     while running:
@@ -123,9 +137,9 @@ def game_screen(window, clock, assets):
                     running = False
                 # Bloqueia controles se estiver morrendo
                 if not getattr(dante, 'is_dying', False):
-                    if event.key == pygame.K_SPACE:
+                    if event.key == pygame.K_w:
                         dante.pular()
-                    if event.key == pygame.K_z:
+                    if event.key == pygame.K_SPACE:
                         assets['atk_sound'].play()
                         dante.attack(enemies)
                         for e in enemies:
@@ -153,19 +167,86 @@ def game_screen(window, clock, assets):
             # Garante que pare de se mover durante a morte
             dante.parar()
 
-        if ganancia is None and dante.rect.centerx >= LARGURA // 2 and dante.rect.centerx <= LARGURA // 2 + 200:
-            bx = LARGURA // 2
-            by = ALTURA - 10
-            ganancia = BossGanancia(bx, by, assets=assets)
-            enemies.add(ganancia)
+        # --- MOVIMENTO ENTRE SALAS (borda direita / esquerda) ---
+        # detecta se há algum boss vivo na sala atual
+        boss_vivo = False
 
-        if ira is None and dante.rect.centerx >= LARGURA - 120:
-            dante.rect.midbottom = (140, ALTURA - 10)
-            dante.parar()
-            bx = LARGURA // 2 + 100
-            by = ALTURA - 10
-            ira = BossIra(bx, by, assets=assets)
-            enemies.add(ira)
+        # checagem para cada boss existente (expande fácil pra futuros)
+        bosses_por_sala = {
+            2: gula,
+            4: getattr(globals(), "luxuria", None),  # placeholder para o futuro boss da sala 4
+            6: ira
+        }
+
+        boss_atual = bosses_por_sala.get(current_room)
+        if boss_atual is not None and getattr(boss_atual, "alive_flag", False):
+            boss_vivo = True
+
+        # --- Borda direita ---
+        if dante.rect.right >= LARGURA:
+            if boss_vivo:
+                # boss ainda está vivo — impede sair, mas permite andar pra dentro
+                dante.rect.right = LARGURA - 2
+                if dante.speedx > 0:
+                    dante.parar()
+            elif current_room < ROOM_COUNT:
+                current_room += 1
+                dante.rect.left = 10
+                dante.parar()
+                spawn_bosses_for_room(current_room)
+
+                # adiciona/remover bosses conforme sala
+                if gula and current_room == 2 and gula not in enemies:
+                    enemies.add(gula)
+                if ira and current_room == 6 and ira not in enemies:
+                    enemies.add(ira)
+                # futuro boss (sala 4)
+                if "luxuria" in globals():
+                    luxuria = globals()["luxuria"]
+                    if luxuria and current_room == 4 and luxuria not in enemies:
+                        enemies.add(luxuria)
+
+                # remove bosses fora da sala
+                for sala, boss in bosses_por_sala.items():
+                    if boss and current_room != sala and boss in enemies:
+                        try: enemies.remove(boss)
+                        except Exception: pass
+            else:
+                dante.rect.right = LARGURA - 2
+                if dante.speedx > 0:
+                    dante.parar()
+
+        # --- Borda esquerda ---
+        if dante.rect.left <= 0:
+            if boss_vivo:
+                dante.rect.left = 2
+                if dante.speedx < 0:
+                    dante.parar()
+            elif current_room > 1:
+                current_room -= 1
+                dante.rect.right = LARGURA - 10
+                dante.parar()
+                spawn_bosses_for_room(current_room)
+
+                if gula and current_room == 2 and gula not in enemies:
+                    enemies.add(gula)
+                if ira and current_room == 6 and ira not in enemies:
+                    enemies.add(ira)
+                # futuro boss (sala 4)
+                if "luxuria" in globals():
+                    luxuria = globals()["luxuria"]
+                    if luxuria and current_room == 4 and luxuria not in enemies:
+                        enemies.add(luxuria)
+
+                # remove bosses fora da sala
+                for sala, boss in bosses_por_sala.items():
+                    if boss and current_room != sala and boss in enemies:
+                        try: enemies.remove(boss)
+                        except Exception: pass
+            else:
+                dante.rect.left = 2
+                if dante.speedx < 0:
+                    dante.parar()
 
         all_sprites.update(dt)
 
@@ -219,17 +300,6 @@ def game_screen(window, clock, assets):
                 pass
             ira = None
 
-        if ganancia is not None and not ganancia.alive_flag:
-            try:
-                ganancia.kill()
-            except Exception:
-                pass
-            try:
-                enemies.remove(ganancia)
-            except Exception:
-                pass
-            ganancia = None
-
         if gula is not None and not gula.alive_flag:
             try:
                 gula.kill()
@@ -273,8 +343,6 @@ def game_screen(window, clock, assets):
         boss_for_hud = None
         if ira is not None:
             boss_for_hud = ira
-        elif ganancia is not None:
-            boss_for_hud = ganancia
         elif gula is not None:
             boss_for_hud = gula
 
@@ -291,12 +359,7 @@ def game_screen(window, clock, assets):
             window.blit(s_bg, (bg_rect.x, bg_rect.y))
 
             name_font = pygame.font.SysFont(None, 28)
-            if isinstance(boss_for_hud, BossIra):
-                boss_name = "IRA"
-            elif isinstance(boss_for_hud, BossGanancia):
-                boss_name = "GANÂNCIA"
-            else:
-                boss_name = "GULA"
+            boss_name = "IRA" if isinstance(boss_for_hud, BossIra) else "GULA"
             name_surf = name_font.render(boss_name, True, (230, 230, 230))
             name_pos = (x + (bar_w - name_surf.get_width()) // 2, y - 2)
             window.blit(name_surf, name_pos)
@@ -308,6 +371,12 @@ def game_screen(window, clock, assets):
             pygame.draw.rect(window, (60, 60, 60), bar_rect)
             pygame.draw.rect(window, (200, 40, 40), hp_rect)
             pygame.draw.rect(window, (20, 20, 20), bar_rect, 2)
+            # Mostrar número de vida do boss (HP atual / total)
+            hp_text = f"{boss_for_hud.hp}/{boss_for_hud.base_hp}"
+            hp_font = pygame.font.SysFont(None, 26, bold=True)
+            hp_surf = hp_font.render(hp_text, True, (255, 255, 255))
+            hp_rect = hp_surf.get_rect(center=(x + bar_w // 2, y + 18 + bar_h // 2))
+            window.blit(hp_surf, hp_rect)
 
         # Mostra corações (agora atualiza corretamente)
         hearts = "♥ " * max(0, dante.lives)
