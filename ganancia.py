@@ -31,16 +31,16 @@ class BossGanancia(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(midbottom=(x, y))
 
         self.projectiles = []
-        self.shoot_delay = 2000  # ms entre disparos
+        self.shoot_delay = 2500  # ms entre disparos
         self.shoot_timer = 0
-        self.projectile_speed = 4
+        self.projectile_speed = 5
         self.projectile_img = pygame.Surface((16, 16), pygame.SRCALPHA)
         pygame.draw.circle(self.projectile_img, (255, 215, 0), (8, 8), 8)  # moeda dourada simples
 
         self.speed = 2.0
         self.max_x = LARGURA - 100
         self.min_x = 100
-        self.max_y = ALTURA // 3
+        self.max_y = ALTURA // 2
         self.min_y = 100
         self.target_pos = pygame.math.Vector2(random.randint(self.min_x, self.max_x), random.randint(self.min_y, self.max_y))
         self.pos = pygame.math.Vector2(self.rect.centerx, self.rect.centery)
