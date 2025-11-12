@@ -30,6 +30,13 @@ class BossGanancia(pygame.sprite.Sprite):
         self.image = self.idle_frames[0] if self.idle_frames else pygame.Surface([50, 50])
         self.rect = self.image.get_rect(midbottom=(x, y))
 
+        self.projectiles = []
+        self.shoot_delay = 1500  # ms entre disparos
+        self.shoot_timer = 0
+        self.projectile_speed = 5
+        self.projectile_img = pygame.Surface((16, 16), pygame.SRCALPHA)
+        pygame.draw.circle(self.projectile_img, (255, 215, 0), (8, 8), 8)  # moeda dourada simples
+
         self.speed = 2.0
         self.max_x = LARGURA - 100
         self.min_x = 100
@@ -126,8 +133,41 @@ class BossGanancia(pygame.sprite.Sprite):
         
         self._animate(dt)
 
+        # 2. Ataque à distância (atira moedas)
+        self.shoot_timer += dt
+        if self.shoot_timer >= self.shoot_delay and not self.is_dying:
+            self.shoot_timer = 0
+            if 'player' in kwargs:
+                player = kwargs['player']
+                dx = player.rect.centerx - self.rect.centerx
+                dy = player.rect.centery - self.rect.centery
+                dist = max(1, (dx ** 2 + dy ** 2) ** 0.5)
+                vx = self.projectile_speed * dx / dist
+                vy = self.projectile_speed * dy / dist
+                rect = self.projectile_img.get_rect(center=self.rect.center)
+                self.projectiles.append({'rect': rect, 'vx': vx, 'vy': vy, 'life': 4000})
+
+
         # 3. Colisão com Dante
         if 'player' in kwargs and self.alive_flag and not self.is_dying:
             dante = kwargs['player']
             if self.rect.colliderect(dante.rect) and not getattr(dante, 'is_hurt', False):
                 dante.dano(amount=self.damage)
+        
+        # Atualiza projéteis
+        for p in list(self.projectiles):
+            p['rect'].x += p['vx']
+            p['rect'].y += p['vy']
+            p['life'] -= dt
+            if p['life'] <= 0:
+                self.projectiles.remove(p)
+            elif 'player' in kwargs and p['rect'].colliderect(kwargs['player'].rect):
+                kwargs['player'].dano(amount=self.damage // 2)
+                try:
+                    self.projectiles.remove(p)
+                except ValueError:
+                    pass
+                
+    def draw_traces(self, surface):
+        for p in self.projectiles:
+            surface.blit(self.projectile_img, p['rect'])
