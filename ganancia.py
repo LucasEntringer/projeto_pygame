@@ -6,7 +6,16 @@ from config import LARGURA, ALTURA, FPS
 
 class BossGanancia(pygame.sprite.Sprite):
     def __init__(self, x, y, assets=None, groups=None):
-        super().__init__(groups)
+        # Inicializa o sprite sem passar `groups` diretamente
+        super().__init__()
+
+        # Se o chamador passou um iterable de groups, adiciona o sprite a eles
+        if groups:
+            try:
+                for g in groups:
+                    g.add(self)
+            except Exception:
+                pass
 
         self.base_hp = 300
         self.hp = self.base_hp
@@ -122,4 +131,3 @@ class BossGanancia(pygame.sprite.Sprite):
             dante = kwargs['player']
             if self.rect.colliderect(dante.rect) and not getattr(dante, 'is_hurt', False):
                 dante.dano(amount=self.damage)
-            self.hp = max(0, self.hp - amount)
