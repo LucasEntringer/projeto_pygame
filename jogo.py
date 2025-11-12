@@ -1,3 +1,4 @@
+
 import pygame
 import os
 from config import LARGURA, ALTURA, FPS, IMG_DIR, SND_DIR, MENU_STATE, GAME_STATE, EXIT_STATE, GAME_OVER_STATE, VICTORY_STATE
@@ -135,7 +136,6 @@ def game_screen(window, clock, assets):
             return None
         try:
             img = pygame.image.load(path)
-            # convert/convert_alpha adequados dependendo do alpha
             img = img.convert_alpha() if img.get_alpha() else img.convert()
             img = pygame.transform.scale(img, (LARGURA, ALTURA))
             return img
@@ -150,30 +150,12 @@ def game_screen(window, clock, assets):
     bg_cache[5] = _load_bg_file('Cenário_inferno.png')
     bg_cache[6] = _load_bg_file('Cenário_ira.png')
 
-    # tenta carregar imagem de vitória (fundo)
-    victory_bg_path = os.path.join(IMG_DIR, 'victory_bg.png')
-    victory_bg = None
-    if os.path.isfile(victory_bg_path):
-        try:
-            vb = pygame.image.load(victory_bg_path)
-            vb = vb.convert_alpha() if vb.get_alpha() else vb.convert()
-            victory_bg = pygame.transform.scale(vb, (LARGURA, ALTURA))
-        except Exception:
-            victory_bg = None
-
-    # --- ALTURA FIXA DA PLATAFORMA (ajuste conforme a arte do fundo) ---
-    # experimente valores como ALTURA - 60, ALTURA - 72, ALTURA - 90 até ficar perfeito
     PLATFORM_Y = ALTURA - 110
-
-    # posicionamento inicial do jogador exatamente sobre a plataforma
     dante.rect.midbottom = (LARGURA // 2, PLATFORM_Y)
 
     while running:
         dt = clock.tick(FPS)
-
-        # Seleciona o background pré-carregado para a sala atual
         bg = bg_cache.get(current_room)
-
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -181,7 +163,6 @@ def game_screen(window, clock, assets):
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False
-                # Bloqueia controles se estiver morrendo
                 if not getattr(dante, 'is_dying', False):
                     if event.key == pygame.K_w:
                         dante.pular()
@@ -195,7 +176,6 @@ def game_screen(window, clock, assets):
                                 except Exception:
                                     pass
 
-        # Bloqueia movimentação se estiver morrendo
         if not getattr(dante, 'is_dying', False):
             keys = pygame.key.get_pressed()
             left = keys[pygame.K_a] or keys[pygame.K_LEFT]
@@ -210,14 +190,9 @@ def game_screen(window, clock, assets):
             else:
                 dante.parar()
         else:
-            # Garante que pare de se mover durante a morte
             dante.parar()
 
-        # --- MOVIMENTO ENTRE SALAS (borda direita / esquerda) ---
-        # detecta se há algum boss vivo na sala atual
         boss_vivo = False
-
-        # checagem para cada boss existente (expande fácil pra futuros)
         bosses_por_sala = {
             2: gula,
             4: luxuria,
@@ -228,30 +203,23 @@ def game_screen(window, clock, assets):
         if boss_atual is not None and getattr(boss_atual, "alive_flag", False):
             boss_vivo = True
 
-        # --- Borda direita ---
         if dante.rect.right >= LARGURA:
             if boss_vivo:
-                # boss ainda está vivo — impede sair, mas permite andar pra dentro
                 dante.rect.right = LARGURA - 2
                 if dante.speedx > 0:
                     dante.parar()
             elif current_room < ROOM_COUNT:
                 current_room += 1
                 dante.rect.left = 10
-                # garante y alinhado com a plataforma
                 dante.rect.midbottom = (dante.rect.centerx, PLATFORM_Y)
                 dante.parar()
                 spawn_bosses_for_room(current_room)
-
-                # adiciona/remover bosses conforme sala
                 if gula and current_room == 2 and gula not in enemies:
                     enemies.add(gula)
                 if luxuria and current_room == 4 and luxuria not in enemies:
                     enemies.add(luxuria)
                 if ira and current_room == 6 and ira not in enemies:
                     enemies.add(ira)
-
-                # remove bosses fora da sala
                 for sala, boss in bosses_por_sala.items():
                     if boss and current_room != sala and boss in enemies:
                         try: enemies.remove(boss)
@@ -261,7 +229,6 @@ def game_screen(window, clock, assets):
                 if dante.speedx > 0:
                     dante.parar()
 
-        # --- Borda esquerda ---
         if dante.rect.left <= 0:
             if boss_vivo:
                 dante.rect.left = 2
@@ -270,22 +237,17 @@ def game_screen(window, clock, assets):
             elif current_room > 1:
                 current_room -= 1
                 dante.rect.right = LARGURA - 10
-                # garante y alinhado com a plataforma
                 dante.rect.midbottom = (dante.rect.centerx, PLATFORM_Y)
                 dante.parar()
                 spawn_bosses_for_room(current_room)
-
                 if gula and current_room == 2 and gula not in enemies:
                     enemies.add(gula)
                 if ira and current_room == 6 and ira not in enemies:
                     enemies.add(ira)
-                # futuro boss (sala 4)
                 if "luxuria" in globals():
                     luxuria = globals()["luxuria"]
                     if luxuria and current_room == 4 and luxuria not in enemies:
                         enemies.add(luxuria)
-
-                # remove bosses fora da sala
                 for sala, boss in bosses_por_sala.items():
                     if boss and current_room != sala and boss in enemies:
                         try: enemies.remove(boss)
@@ -300,7 +262,6 @@ def game_screen(window, clock, assets):
         now = pygame.time.get_ticks()
         for e in list(enemies):
             try:
-                # passa ground_y = PLATFORM_Y para consistência com a linha da plataforma
                 e.update(dt, window_width=LARGURA, ground_y=PLATFORM_Y, player=dante)
             except TypeError:
                 try:
@@ -317,6 +278,10 @@ def game_screen(window, clock, assets):
                 for t in list(e.traces):
                     if now >= t['warn_until'] and now < t['active_until']:
                         # versão alinhada: deixa a área dos pés maior e "encaixa" verticalmente com o hitbox do trace
+                        # só aplica a verificação se o jogador estiver no chão (evita dano no ar)
+                        if not getattr(dante, 'no_chao', False):
+                            continue
+
                         feet_h = 28
                         feet_w = max(32, int(dante.rect.width * 0.45))
                         feet_x = dante.rect.centerx - feet_w // 2
@@ -352,7 +317,6 @@ def game_screen(window, clock, assets):
             except Exception:
                 pass
             ira = None
-            # quando derrota a Ira, mostrar tela de vitória
             return VICTORY_STATE
 
         if gula is not None and not gula.alive_flag:
@@ -376,11 +340,10 @@ def game_screen(window, clock, assets):
             except Exception:
                 pass
             luxuria = None
-        # CORREÇÃO: Inicia a animação de morte, mas NÃO retorna ainda
         if dante.lives <= 0:
             if not getattr(dante, 'is_dying', False) and not getattr(dante, 'die_played', False):
                 dante.morrer()
-                assets['hurt_sound'].play()  # Toca som de morte (opcional)
+                assets['hurt_sound'].play()
 
         if bg:
             window.blit(bg, (0, 0))
@@ -438,14 +401,12 @@ def game_screen(window, clock, assets):
             pygame.draw.rect(window, (60, 60, 60), bar_rect)
             pygame.draw.rect(window, (200, 40, 40), hp_rect)
             pygame.draw.rect(window, (20, 20, 20), bar_rect, 2)
-            # Mostrar número de vida do boss (HP atual / total)
             hp_text = f"{boss_for_hud.hp}/{boss_for_hud.base_hp}"
             hp_font = pygame.font.SysFont(None, 26, bold=True)
             hp_surf = hp_font.render(hp_text, True, (255, 255, 255))
             hp_rect = hp_surf.get_rect(center=(x + bar_w // 2, y + 18 + bar_h // 2))
             window.blit(hp_surf, hp_rect)
 
-        # Mostra corações (agora atualiza corretamente)
         hearts = "♥ " * max(0, dante.lives)
         if hearts:
             heart_surf = font.render(hearts, True, HEART_COLOR)
@@ -453,7 +414,6 @@ def game_screen(window, clock, assets):
 
         pygame.display.flip()
 
-        # SÓ VAI PARA GAME OVER quando a animação de morte terminar
         if dante.lives <= 0 and getattr(dante, 'die_played', False):
             return GAME_OVER_STATE
             
@@ -491,13 +451,12 @@ def game_over_screen(window, clock, assets):
 
 
 def victory_screen(window, clock, assets):
-    font_titulo = pygame.font.SysFont("Arial", 70, bold=True)
-    font_instrucao = pygame.font.SysFont("Arial", 30)
-    VERDE = (0, 200, 0)
-    BRANCO = (255, 255, 255)
-    PRETO = (0, 0, 0)
+    font_titulo = pygame.font.SysFont("Georgia", 90, bold=True)
+    font_instrucao = pygame.font.SysFont("Segoe UI Symbol", 28)
+    COR_TITULO = (255, 215, 0)
+    COR_SOMBRA = (20, 20, 20)
+    COR_INSTRUCAO = (245, 245, 245)
 
-    # tenta tocar música de vitória se existir
     victory_music_path = os.path.join(SND_DIR, 'victory_theme.wav')
     if os.path.isfile(victory_music_path):
         try:
@@ -507,20 +466,25 @@ def victory_screen(window, clock, assets):
         except Exception:
             pass
 
-    # tenta usar a imagem de fundo de vitória (se carregada anteriormente nos assets)
-    victory_bg_path = os.path.join(IMG_DIR, 'victory_bg.png')
     victory_bg_img = None
-    if os.path.isfile(victory_bg_path):
-        try:
-            img = pygame.image.load(victory_bg_path)
-            img = img.convert_alpha() if img.get_alpha() else img.convert()
-            victory_bg_img = pygame.transform.scale(img, (LARGURA, ALTURA))
-        except Exception:
-            victory_bg_img = None
+    try:
+        folder = os.path.join(IMG_DIR, 'imagem_da_tela_final')
+        if os.path.isdir(folder):
+            imagens = [f for f in os.listdir(folder) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+            if imagens:
+                img_path = os.path.join(folder, imagens[0])
+                img = pygame.image.load(img_path)
+                img = img.convert_alpha() if img.get_alpha() else img.convert()
+                victory_bg_img = pygame.transform.scale(img, (LARGURA, ALTURA))
+    except Exception:
+        victory_bg_img = None
 
     running_victory = True
+    alpha = 0
+    fade_in = True
+
     while running_victory:
-        clock.tick(FPS)
+        dt = clock.tick(FPS)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -532,15 +496,33 @@ def victory_screen(window, clock, assets):
         if victory_bg_img:
             window.blit(victory_bg_img, (0, 0))
         else:
-            window.fill(PRETO)
+            window.fill((0, 0, 0))
 
-        text_victory = font_titulo.render("VOCÊ VENCEU!", True, VERDE)
-        text_victory_rect = text_victory.get_rect(center=(LARGURA // 2, ALTURA // 2 - 50))
-        window.blit(text_victory, text_victory_rect)
+        if fade_in:
+            alpha += int(300 * (dt / 1000.0))
+            if alpha >= 255:
+                alpha = 255
+                fade_in = False
 
-        text_inst = font_instrucao.render("Pressione ESC para voltar ao Menu", True, BRANCO)
-        text_inst_rect = text_inst.get_rect(center=(LARGURA // 2, ALTURA // 2 + 50))
-        window.blit(text_inst, text_inst_rect)
+        title_text = "VOCÊ VENCEU!"
+        title_surf = font_titulo.render(title_text, True, COR_TITULO)
+        shadow_surf = font_titulo.render(title_text, True, COR_SOMBRA)
+
+        title_surf_alpha = title_surf.copy().convert_alpha()
+        shadow_surf_alpha = shadow_surf.copy().convert_alpha()
+        title_surf_alpha.fill((255, 255, 255, alpha), special_flags=pygame.BLEND_RGBA_MULT)
+        shadow_surf_alpha.fill((255, 255, 255, alpha), special_flags=pygame.BLEND_RGBA_MULT)
+
+        title_rect = title_surf_alpha.get_rect(center=(LARGURA // 2, ALTURA // 2 - 80))
+        window.blit(shadow_surf_alpha, (title_rect.x + 4, title_rect.y + 4))
+        window.blit(title_surf_alpha, title_rect)
+
+        instr_text = "Pressione ESC para voltar ao Menu"
+        instr_surf = font_instrucao.render(instr_text, True, COR_INSTRUCAO)
+        instr_surf_alpha = instr_surf.copy().convert_alpha()
+        instr_surf_alpha.fill((255, 255, 255, alpha), special_flags=pygame.BLEND_RGBA_MULT)
+        instr_rect = instr_surf_alpha.get_rect(center=(LARGURA // 2, ALTURA // 2 + 60))
+        window.blit(instr_surf_alpha, instr_rect)
 
         pygame.display.flip()
 
@@ -578,4 +560,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
