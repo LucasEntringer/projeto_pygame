@@ -184,16 +184,14 @@ def load_assets():
     assets[MENU_BACK] = pygame.image.load(os.path.join(IMG_DIR, "menu_hell.jpg")).convert()
     assets[MENU_BACK] = pygame.transform.scale(assets[MENU_BACK],(LARGURA,ALTURA))
 
+    #imagem dos comandos
+    COMMAND_SCR = 'command_scr'
+
+    assets[COMMAND_SCR] = pygame.image.load(os.path.join(IMG_DIR, "Gemini_Generated_Image_4trti34trti34trt.png")).convert()
+    assets[COMMAND_SCR] = pygame.transform.scale(assets[COMMAND_SCR],(LARGURA,ALTURA))
 
 
-
-
-
-    #Trilha sonora e sons
-
-    pygame.mixer.music.load(os.path.join(SND_DIR, 'Verdi_s-Requiem_-II.-Dies-Irae-_CUGMZlvrR4c_.ogg'))
-
-    pygame.mixer.music.set_volume(0.5)
+    #Sons
 
     ATK_SOUND='atk_sound'
     assets[ATK_SOUND]=pygame.mixer.Sound(os.path.join(SND_DIR,'sword-slash-and-swing-185432.wav'))

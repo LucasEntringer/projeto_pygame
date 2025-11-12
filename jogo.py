@@ -1,7 +1,6 @@
-
 import pygame
 import os
-from config import LARGURA, ALTURA, FPS, IMG_DIR, SND_DIR, MENU_STATE, GAME_STATE, EXIT_STATE, GAME_OVER_STATE, VICTORY_STATE
+from config import LARGURA, ALTURA, FPS, IMG_DIR, SND_DIR, MENU_STATE, GAME_STATE, EXIT_STATE, GAME_OVER_STATE, VICTORY_STATE, COMMAND_STATE
 from assets import load_assets
 from ira import BossIra
 from classes import Dante
@@ -15,14 +14,14 @@ def menu_screen(window, clock, assets):
     TAMANHO_NORMAL = 70
     TAMANHO_HOVER = 75
 
-    font_normal = pygame.font.SysFont("Dark Hell Font", TAMANHO_NORMAL, bold=True)
-    font_hover = pygame.font.SysFont("Dark Hell Font", TAMANHO_HOVER, bold=True)
+    font_normal = pygame.font.SysFont("Georgia", TAMANHO_NORMAL, bold=True)
+    font_hover = pygame.font.SysFont("Georgia", TAMANHO_HOVER, bold=True)
 
     COLOR_NORMAL = (180, 180, 180)
     COLOR_HOVER = (255, 255, 255)
 
     #fontes e cores
-    font_menu = pygame.font.SysFont("Dark Hell Font", 50)
+    font_menu = pygame.font.SysFont("Georgia", 50)
     BTN_COLOR = (100, 100, 100)
     BTN_HOVER_COLOR = (150, 150, 150)
     TEXT_COLOR = (255, 255, 255)
@@ -33,7 +32,8 @@ def menu_screen(window, clock, assets):
     btn_x = (LARGURA - btn_w) // 2
 
     start_btn = pygame.Rect(btn_x, 250, btn_w, btn_h) # Botão "Iniciar"
-    exit_btn = pygame.Rect(btn_x, 350, btn_w, btn_h)  # Botão "Sair"
+    command_btn = pygame.Rect(btn_x, 350, btn_w, btn_h) #Botão "comandos"
+    exit_btn = pygame.Rect(btn_x, 450, btn_w, btn_h)  # Botão "Sair"
 
     background = assets['menu_back']
 
@@ -57,6 +57,9 @@ def menu_screen(window, clock, assets):
                     assets['atk_sound'].play()
                     if start_btn.collidepoint(mouse_pos):
                         return GAME_STATE
+                    
+                    if command_btn.collidepoint(mouse_pos):
+                        return COMMAND_STATE
             
                     if exit_btn.collidepoint(mouse_pos):
                         return EXIT_STATE
@@ -70,6 +73,13 @@ def menu_screen(window, clock, assets):
         
         text_rect = text_surf.get_rect(center=start_btn.center)
         window.blit(text_surf, text_rect)
+
+        if command_btn.collidepoint(mouse_pos):
+            text_surf = font_hover.render("Comandos", True, COLOR_HOVER)
+        else:
+            text_surf = font_normal.render("Comandos", True, COLOR_NORMAL)
+        text_rect = text_surf.get_rect(center=command_btn.center)
+        window.blit(text_surf, text_rect)
         
         if exit_btn.collidepoint(mouse_pos):
             text_surf = font_hover.render("Sair", True, COLOR_HOVER)
@@ -78,6 +88,24 @@ def menu_screen(window, clock, assets):
             
         text_rect = text_surf.get_rect(center=exit_btn.center)
         window.blit(text_surf, text_rect)
+
+        pygame.display.flip()
+
+def command_screen(window, clock, assets):
+    command_img = assets["command_scr"]
+
+    running_commands = True
+    while running_commands:
+        clock.tick(FPS)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return EXIT_STATE
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return MENU_STATE
+                
+        window.blit(command_img, (0, 0))
 
         pygame.display.flip()
 
@@ -420,8 +448,8 @@ def game_screen(window, clock, assets):
     return MENU_STATE
 
 def game_over_screen(window, clock, assets):
-    font_titulo = pygame.font.SysFont("Arial", 70)
-    font_instrucao = pygame.font.SysFont("Arial", 30)
+    font_titulo = pygame.font.SysFont("Georgia", 70)
+    font_instrucao = pygame.font.SysFont("Segoe UI Symbol", 30)
     VERMELHO = (200, 0, 0)
     BRANCO = (255, 255, 255)
     PRETO = (0, 0, 0)
@@ -443,7 +471,7 @@ def game_over_screen(window, clock, assets):
         text_go_rect = text_go.get_rect(center=(LARGURA // 2, ALTURA // 2 - 50))
         window.blit(text_go, text_go_rect)
 
-        text_inst = font_instrucao.render("Pressione ESC para voltar ao Menu", True, BRANCO)
+        text_inst = font_instrucao.render("PRESSIONE ESC PARA VOLTAR AO MENU", True, BRANCO)
         text_inst_rect = text_inst.get_rect(center=(LARGURA // 2, ALTURA // 2 + 50))
         window.blit(text_inst, text_inst_rect)
 
@@ -517,7 +545,7 @@ def victory_screen(window, clock, assets):
         window.blit(shadow_surf_alpha, (title_rect.x + 4, title_rect.y + 4))
         window.blit(title_surf_alpha, title_rect)
 
-        instr_text = "Pressione ESC para voltar ao Menu"
+        instr_text = "PRESSIONE ESC PARA VOLTAR AO MENU"
         instr_surf = font_instrucao.render(instr_text, True, COR_INSTRUCAO)
         instr_surf_alpha = instr_surf.copy().convert_alpha()
         instr_surf_alpha.fill((255, 255, 255, alpha), special_flags=pygame.BLEND_RGBA_MULT)
@@ -531,7 +559,7 @@ def main():
     pygame.init()
     pygame.mixer.init()
     window = pygame.display.set_mode((LARGURA, ALTURA))
-    pygame.display.set_caption("Meu inferninho")
+    pygame.display.set_caption("HELLFIRE")
     clock = pygame.time.Clock()
     
     # Carrega os assets
@@ -555,6 +583,9 @@ def main():
 
         elif current_state == VICTORY_STATE:
             current_state = victory_screen(window, clock, assets)
+
+        elif current_state == COMMAND_STATE:
+            current_state = command_screen(window, clock, assets)
 
     pygame.quit()
 
