@@ -126,15 +126,36 @@ def game_screen(window, clock, assets):
     running = True
     pygame.mixer.music.play(loops=-1)
 
+    # --- PRELOAD BACKGROUNDS (evita carregar a imagem a cada frame) ---
+    # salas: 1,3,5 -> inferno ; 2 -> gula ; 4 -> ganancia ; 6 -> ira
+    bg_cache = {}
+    def _load_bg_file(filename):
+        path = os.path.join(IMG_DIR, 'inferno', filename)
+        if not os.path.isfile(path):
+            return None
+        try:
+            img = pygame.image.load(path)
+            # convert/convert_alpha adequados dependendo do alpha
+            img = img.convert_alpha() if img.get_alpha() else img.convert()
+            img = pygame.transform.scale(img, (LARGURA, ALTURA))
+            return img
+        except Exception as e:
+            print("Erro carregando bg:", path, e)
+            return None
+
+    bg_cache[1] = _load_bg_file('Cenário_inferno.png')
+    bg_cache[2] = _load_bg_file('Cenário_gula.png')
+    bg_cache[3] = _load_bg_file('Cenário_inferno.png')
+    bg_cache[4] = _load_bg_file('Cenário_ganancia.png')
+    bg_cache[5] = _load_bg_file('Cenário_inferno.png')
+    bg_cache[6] = _load_bg_file('Cenário_ira.png')
+
     while running:
         dt = clock.tick(FPS)
 
-        bg_path = os.path.join(IMG_DIR, 'inferno', 'Cenario_inferno.png')
-        try:
-            bg = pygame.image.load(bg_path).convert()
-            bg = pygame.transform.scale(bg, (LARGURA, ALTURA))
-        except Exception:
-            bg = None
+        # Seleciona o background pré-carregado para a sala atual
+        bg = bg_cache.get(current_room)
+
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
