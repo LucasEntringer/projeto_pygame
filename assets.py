@@ -190,6 +190,13 @@ def load_assets():
     assets[COMMAND_SCR] = pygame.image.load(os.path.join(IMG_DIR, "Gemini_Generated_Image_4trti34trti34trt.png")).convert()
     assets[COMMAND_SCR] = pygame.transform.scale(assets[COMMAND_SCR],(LARGURA,ALTURA))
 
+    #background game over
+
+    GAME_OVER_BACK = 'game_over_back'
+
+    assets[GAME_OVER_BACK] = pygame.image.load(os.path.join(IMG_DIR, "game_over_back.jpg")).convert()
+    assets[GAME_OVER_BACK] = pygame.transform.scale(assets[GAME_OVER_BACK], (LARGURA,ALTURA))
+
 
     #Sons
 

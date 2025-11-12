@@ -453,13 +453,14 @@ def game_over_screen(window, clock, assets):
     VERMELHO = (200, 0, 0)
     BRANCO = (255, 255, 255)
     PRETO = (0, 0, 0)
-
+    background_over = assets['game_over_back']
     show_text = True
     BLINK_INTERVAL = 400
     last_update = pygame.time.get_ticks()
 
     running_game_over = True
     while running_game_over:
+        window.blit(background_over, (0,0))
         now = pygame.time.get_ticks()
         clock.tick(FPS)
 
@@ -474,24 +475,21 @@ def game_over_screen(window, clock, assets):
             show_text = not show_text
             last_update = now
 
-
-    
-        window.fill(PRETO)
-
-        text_go = font_titulo.render("GAME OVER", True, VERMELHO)
+        text_go = font_titulo.render("GAME OVER", True, BRANCO)
         text_go_rect = text_go.get_rect(center=(LARGURA // 2, ALTURA // 2 - 50))
         window.blit(text_go, text_go_rect)
         if show_text: 
             text_inst = font_instrucao.render("PRESSIONE ESC PARA VOLTAR AO MENU", True, BRANCO)
             text_inst_rect = text_inst.get_rect(center=(LARGURA // 2, ALTURA // 2 + 50))
             window.blit(text_inst, text_inst_rect)
+        
 
         pygame.display.flip()
 
 
 def victory_screen(window, clock, assets):
     font_titulo = pygame.font.SysFont("Georgia", 90, bold=True)
-    font_instrucao = pygame.font.SysFont("Segoe UI Symbol", 28)
+    font_instrucao = pygame.font.SysFont("Segoe UI Symbol", 35, bold=True)
     COR_TITULO = (255, 215, 0)
     COR_SOMBRA = (20, 20, 20)
     COR_INSTRUCAO = (245, 245, 245)
@@ -522,7 +520,12 @@ def victory_screen(window, clock, assets):
     alpha = 0
     fade_in = True
 
+    show_text = True
+    BLINK_INTERVAL = 400
+    last_update = pygame.time.get_ticks()
+
     while running_victory:
+        now = pygame.time.get_ticks()
         dt = clock.tick(FPS)
 
         for event in pygame.event.get():
@@ -556,12 +559,10 @@ def victory_screen(window, clock, assets):
         window.blit(shadow_surf_alpha, (title_rect.x + 4, title_rect.y + 4))
         window.blit(title_surf_alpha, title_rect)
 
-        instr_text = "PRESSIONE ESC PARA VOLTAR AO MENU"
-        instr_surf = font_instrucao.render(instr_text, True, COR_INSTRUCAO)
-        instr_surf_alpha = instr_surf.copy().convert_alpha()
-        instr_surf_alpha.fill((255, 255, 255, alpha), special_flags=pygame.BLEND_RGBA_MULT)
-        instr_rect = instr_surf_alpha.get_rect(center=(LARGURA // 2, ALTURA // 2 + 60))
-        window.blit(instr_surf_alpha, instr_rect)
+        if show_text: 
+            text_inst = font_instrucao.render("PRESSIONE ESC PARA VOLTAR AO MENU", True, COR_INSTRUCAO)
+            text_inst_rect = text_inst.get_rect(center=(LARGURA // 2, ALTURA // 2 + 50))
+            window.blit(text_inst, text_inst_rect)
 
         pygame.display.flip()
 
