@@ -417,7 +417,13 @@ def game_screen(window, clock, assets):
             window.blit(s_bg, (bg_rect.x, bg_rect.y))
 
             name_font = pygame.font.SysFont(None, 28)
-            boss_name = "IRA" if isinstance(boss_for_hud, BossIra) else "GULA"
+            if isinstance(boss_for_hud, BossIra):
+                boss_name = "IRA"
+            elif isinstance(boss_for_hud, BossGanancia):
+                boss_name = "LUXÚRIA"
+            else:
+                boss_name = "GULA"
+                
             name_surf = name_font.render(boss_name, True, (230, 230, 230))
             name_pos = (x + (bar_w - name_surf.get_width()) // 2, y - 2)
             window.blit(name_surf, name_pos)
